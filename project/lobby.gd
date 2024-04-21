@@ -75,6 +75,7 @@ func _server_receive_player_info(_new_player_info)-> void:
 @rpc("authority", "call_remote", "reliable")
 func _register_player(new_player_id, new_player_info):
 	players[new_player_id] = new_player_info
+	player_connected.emit(new_player_id, new_player_info)
 
 
 @rpc("authority", "call_remote", "reliable")
@@ -90,10 +91,10 @@ func _on_player_connected(id):
 
 func _on_player_disconnected(id):
 	print("Player %d, disconnected!" % id)
+	player_disconnected.emit(id)
 	if !game_started:
 		players.erase(id)
-	else:
-		player_disconnected.emit(id)
+	
 
 
 func _on_connected_fail():

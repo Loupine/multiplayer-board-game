@@ -45,6 +45,34 @@ size_flags_horizontal = 4
 size_flags_vertical = 4
 text = "Connect to Server"
 
+[node name="HBoxContainer" type="HBoxContainer" parent="Control"]
+custom_minimum_size = Vector2(0, 720)
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -200.0
+offset_bottom = 8.0
+grow_horizontal = 0
+alignment = 2
+
+[node name="ConnectedPlayersTextEdit" type="TextEdit" parent="Control/HBoxContainer"]
+unique_name_in_owner = true
+clip_contents = true
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+text = "Connected Players: "
+editable = false
+context_menu_enabled = false
+shortcut_keys_enabled = false
+selecting_enabled = false
+deselect_on_focus_loss_enabled = false
+drag_and_drop_selection_enabled = false
+virtual_keyboard_enabled = false
+middle_mouse_paste_enabled = false
+wrap_mode = 1
+scroll_fit_content_height = true
+
 [node name="InvalidNameDialog" type="AcceptDialog" parent="."]
 unique_name_in_owner = true
 initial_position = 2

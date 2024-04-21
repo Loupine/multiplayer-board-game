@@ -4,3 +4,53 @@
 
 [node name="MainMenu" type="Node2D"]
 script = ExtResource("1_sjucn")
+
+[node name="Control" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_right = 1280.0
+offset_bottom = 720.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Control"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 30
+alignment = 1
+
+[node name="NameTextEdit" type="TextEdit" parent="Control/VBoxContainer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(250, 50)
+layout_mode = 2
+size_flags_horizontal = 4
+tooltip_text = "15 Max Chars; Spaces ignored"
+placeholder_text = "YourNameHere:"
+context_menu_enabled = false
+shortcut_keys_enabled = false
+deselect_on_focus_loss_enabled = false
+scroll_fit_content_height = true
+
+[node name="ConnectButton" type="Button" parent="Control/VBoxContainer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(250, 50)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+text = "Connect to Server"
+
+[node name="InvalidNameDialog" type="AcceptDialog" parent="."]
+unique_name_in_owner = true
+initial_position = 2
+size = Vector2i(300, 80)
+dialog_text = "Name must have at least 1 character"
+dialog_close_on_escape = false
+
+[connection signal="text_changed" from="Control/VBoxContainer/NameTextEdit" to="." method="_on_name_text_changed"]
+[connection signal="pressed" from="Control/VBoxContainer/ConnectButton" to="." method="_on_connect_button_pressed"]

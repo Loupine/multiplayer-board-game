@@ -31,6 +31,16 @@ func _ready():
 	multiplayer.peer_disconnected.connect(_on_player_disconnected)
 	multiplayer.connection_failed.connect(_on_connected_fail)
 
+	create_game()
+
+
+func create_game():
+	var peer = ENetMultiplayerPeer.new()
+	var error = peer.create_server(PORT, MAX_CONNECTIONS)
+	if error:
+		return error
+	multiplayer.multiplayer_peer = peer
+
 
 # When the server decides to start the game from a UI scene,
 # do Lobby.load_game.rpc(filepath)

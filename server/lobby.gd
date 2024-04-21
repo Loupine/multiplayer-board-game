@@ -3,13 +3,12 @@ extends Node
 # Autoload named Lobby
 
 # These signals can be connected to by a UI lobby scene or the game scene.
-signal player_connected(peer_id, player_info)
+signal player_connected_to_lobby()
 signal player_disconnected(peer_id)
-signal server_disconnected
 
 const PORT = 6029
 const DEFAULT_SERVER_IP = "localhost" # IPv4 localhost
-const MAX_CONNECTIONS = 20
+const MAX_CONNECTIONS = 3
 
 # This will contain player info for every player,
 # with the keys being each player's unique IDs.
@@ -20,8 +19,8 @@ var game_started := false
 
 
 func _ready():
-	multiplayer.peer_connected.connect(_on_player_connected)
 	multiplayer.peer_disconnected.connect(_on_player_disconnected)
+	player_connected_to_lobby.connect(_on_player_connected_to_lobby)
 
 	create_game()
 
@@ -65,14 +64,15 @@ func _server_receive_player_info(new_player_info: Dictionary)-> void:
 			else:
 				print("Game started and no players are disconnected")
 				multiplayer.multiplayer_peer.disconnect_peer(sender_id)
-		elif multiplayer.get_peers().size() == MAX_CONNECTIONS:
+		elif multiplayer.get_peers().size() > MAX_CONNECTIONS:
 			print("Server is full. New connection denied.")
-			multiplayer.multiplayer_peer.disconnect_peer(sender_id)
+			multiplayer.multiplayer_peer.disconnect_peer(sender_id, true)
 		else:
 			# If game is not started and the lobby is not full, allow the connection
 			print("%s has connected!" % new_player_info["name"])
 			_send_new_player_info_to_players(sender_id, new_player_info)
 			players[sender_id] = new_player_info
+			player_connected_to_lobby.emit()
 
 
 # Server method, called above, that sends new player info to existing players and
@@ -136,8 +136,9 @@ func _register_player(_new_player_id, _new_player_info):
 	pass
 
 
-func _on_player_connected(id):
-	print("Player %d connected!" % id)
+func _on_player_connected_to_lobby():
+	if players.size() == MAX_CONNECTIONS:
+		load_game.rpc("res://game/game.tscn")
 
 
 func _on_player_disconnected(id):

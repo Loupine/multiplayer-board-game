@@ -28,6 +28,7 @@ func _add_connected_player_name(_id, info)->void:
 func _remove_disconnected_player_name(id)->void:
 	var text_edit : TextEdit = %ConnectedPlayersTextEdit
 	var text = text_edit.text
+	print(Lobby.players.has(id))
 	var player_name = Lobby.players.get(id)["name"]
 	if text.find(player_name) != -1:
 		text_edit.text = text.replace(player_name + "\n", "")

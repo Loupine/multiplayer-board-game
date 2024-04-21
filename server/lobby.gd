@@ -54,43 +54,51 @@ func player_loaded():
 # When server receives new player info from a client, send that info to all other players
 @rpc("any_peer", "call_remote", "reliable")
 func _server_receive_player_info(new_player_info: Dictionary)-> void:
-	print(game_started)
 	var sender_id = multiplayer.get_remote_sender_id()
 	if players.has(sender_id):
 		pass
 	else:
 		if game_started:
 			if !disconnected_players.is_empty():
+				# Try reconnection only if game is started and there are disconnected players
 				print("Trying player reconnect")
 				_try_player_reconnect(sender_id, new_player_info)
 			else:
 				print("Game started and no players are disconnected")
 				multiplayer.multiplayer_peer.disconnect_peer(sender_id)
 		elif multiplayer.get_peers().size() == MAX_CONNECTIONS:
+			print("Server is full. New connection denied.")
 			multiplayer.multiplayer_peer.disconnect_peer(sender_id)
 		else:
+			# If game is not started and the lobby is not full, allow the connection
+			print("%s has connected!" % new_player_info["name"])
 			_send_new_player_info_to_players(sender_id, new_player_info)
 			players[sender_id] = new_player_info
 
 
-# Server method, called above, that sends new player info to other players
+# Server method, called above, that sends new player info to existing players and
+# existing player info to new players
 func _send_new_player_info_to_players(new_player_id, info)->void:
 	for player in players:
-		print(players.get(player)["name"])
+		# Sends new player info to existing players
 		_register_player.rpc_id(player, new_player_id, info)
 
+		# Send existing player info to new players
 		var existing_player_info = players.get(player)
 		_register_player.rpc_id(new_player_id, player, existing_player_info)
 
 
 func _try_player_reconnect(id, info)->void:
 	var player_reconnected := false
+	# Make sure the player isn't already connected!
 	for player in players:
 		var connected_player_info = players.get(player)
 		if connected_player_info["name"] == info["name"]:
 			print("This player is already connected!")
 			multiplayer.multiplayer_peer.disconnect_peer(id, true)
 			return
+
+	# Validate the player was disconnected and try reconnecting them
 	for player in disconnected_players:
 		var disconnected_player_info = disconnected_players.get(player)
 		if disconnected_player_info["name"] == info["name"]:
@@ -99,8 +107,10 @@ func _try_player_reconnect(id, info)->void:
 			players[id] = info
 			disconnected_players.erase(player)
 			player_reconnected = true
-			print("Player successfully reconnected")
+			print("%s successfully reconnected" % info["name"])
 			break
+
+	# If reconnect attempts fail, disconnect the peer
 	if !player_reconnected:
 		multiplayer.multiplayer_peer.disconnect_peer(id, true)
 

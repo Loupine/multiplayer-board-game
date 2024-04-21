@@ -117,8 +117,10 @@ func _try_player_reconnect(id, info)->void:
 
 func _reconnect_clients(old_id, new_id, info):
 	for player in players:
+		# Notify existing players that the player has reconnected
 		_reconnect_player.rpc_id(player, old_id, new_id, info)
 
+		# Re-register existing players with the reconnected one.
 		var existing_player_info = players.get(player)
 		_register_player.rpc_id(new_id, player, existing_player_info)
 

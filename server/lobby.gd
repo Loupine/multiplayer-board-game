@@ -22,7 +22,6 @@ var game_started := false
 func _ready():
 	multiplayer.peer_connected.connect(_on_player_connected)
 	multiplayer.peer_disconnected.connect(_on_player_disconnected)
-	multiplayer.connection_failed.connect(_on_connected_fail)
 
 	create_game()
 
@@ -147,7 +146,3 @@ func _on_player_disconnected(id):
 		disconnected_players[id] = players.get(id)
 		disconnected_players.get(id)["connection_status"] = "Disconnected"
 	players.erase(id)
-
-
-func _on_connected_fail():
-	print("Connection failed. Please try again.")

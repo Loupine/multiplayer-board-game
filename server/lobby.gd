@@ -136,6 +136,14 @@ func _register_player(_new_player_id, _new_player_info):
 	pass
 
 
+func _reset_server()->void:
+	get_tree().change_scene_to_file("res://main_menu.tscn")
+	game_started = false
+	players_loaded = 0
+	players.clear()
+	disconnected_players.clear()
+
+
 func _on_player_connected_to_lobby():
 	if players.size() == MAX_CONNECTIONS:
 		load_game.rpc("res://game/game.tscn")
@@ -143,7 +151,10 @@ func _on_player_connected_to_lobby():
 
 func _on_player_disconnected(id):
 	print("Player %d, disconnected!" % id)
-	if game_started and !players.is_empty():
-		disconnected_players[id] = players.get(id)
-		disconnected_players.get(id)["connection_status"] = "Disconnected"
+	if game_started:
+		if players.is_empty():
+			_reset_server()
+		else:
+			disconnected_players[id] = players.get(id)
+			disconnected_players.get(id)["connection_status"] = "Disconnected"
 	players.erase(id)

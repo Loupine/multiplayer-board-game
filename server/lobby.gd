@@ -13,8 +13,8 @@ const MAX_CONNECTIONS = 3
 # This will contain player info for every player,
 # with the keys being each player's unique IDs.
 var players : Dictionary = {}
-var disconnected_players = {}
-var players_loaded : int = 0
+var disconnected_players : Dictionary = {}
+var players_loaded := 0
 var game_started := false
 
 
@@ -36,13 +36,13 @@ func create_game():
 # When the server decides to start the game from a UI scene,
 # do Lobby.load_game.rpc(filepath)
 @rpc("authority", "call_local", "reliable")
-func load_game(game_scene_path):
+func load_game(game_scene_path)->void:
 	get_tree().change_scene_to_file(game_scene_path)
 
 
 # Every peer will call this when they have loaded the game scene.
 @rpc("any_peer", "call_local", "reliable")
-func player_loaded():
+func player_loaded()->void:
 	players_loaded += 1
 	if players_loaded == players.size():
 		$/root/Game.start_game()
@@ -51,7 +51,7 @@ func player_loaded():
 
 # When server receives new player info from a client, send that info to all other players
 @rpc("any_peer", "call_remote", "reliable")
-func _server_receive_player_info(new_player_info: Dictionary)-> void:
+func _server_receive_player_info(new_player_info: Dictionary)->void:
 	var sender_id = multiplayer.get_remote_sender_id()
 	if players.has(sender_id):
 		pass
@@ -114,7 +114,7 @@ func _try_player_reconnect(id, info)->void:
 		multiplayer.multiplayer_peer.disconnect_peer(id, true)
 
 
-func _reconnect_clients(old_id, new_id, info):
+func _reconnect_clients(old_id, new_id, info)->void:
 	for player in players:
 		# Notify existing players that the player has reconnected
 		_reconnect_player.rpc_id(player, old_id, new_id, info)
@@ -126,13 +126,13 @@ func _reconnect_clients(old_id, new_id, info):
 
 # Client method that handles player reconnection
 @rpc("authority", "call_remote", "reliable")
-func _reconnect_player(_old_id, _new_id, _info):
+func _reconnect_player(_old_id, _new_id, _info)->void:
 	pass
 
 
 # Client method that adds new players with info sent from server
 @rpc("authority", "call_remote", "reliable")
-func _register_player(_new_player_id, _new_player_info):
+func _register_player(_new_player_id, _new_player_info)->void:
 	pass
 
 
@@ -144,12 +144,12 @@ func _reset_server()->void:
 	disconnected_players.clear()
 
 
-func _on_player_connected_to_lobby():
+func _on_player_connected_to_lobby()->void:
 	if players.size() == MAX_CONNECTIONS:
 		load_game.rpc("res://game/game.tscn")
 
 
-func _on_player_disconnected(id):
+func _on_player_disconnected(id)->void:
 	print("Player %d, disconnected!" % id)
 	if game_started:
 		if players.is_empty():

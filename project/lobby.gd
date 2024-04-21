@@ -24,7 +24,6 @@ var player_info = {
 	"board_position": "Position",
 	"connection_status": "Status"
 }
-var players_loaded = 0
 var game_started := false
 
 

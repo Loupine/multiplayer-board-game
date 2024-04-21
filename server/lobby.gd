@@ -40,6 +40,15 @@ func load_game(game_scene_path)->void:
 	get_tree().change_scene_to_file(game_scene_path)
 
 
+# When the server ends the game, it should do Lobby.load_lobby(filepath) to reset players
+# back to the lobby.
+@rpc("authority", "call_local", "reliable")
+func load_lobby(lobby_scene_path)->void:
+	get_tree().change_scene_to_file(lobby_scene_path)
+	game_started = false
+	players_loaded = 0
+
+
 # Every peer will call this when they have loaded the game scene.
 @rpc("any_peer", "call_local", "reliable")
 func player_loaded()->void:

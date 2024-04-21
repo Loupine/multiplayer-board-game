@@ -2,7 +2,7 @@ extends Node2D
 
 
 func _ready():
-	Lobby.player_connected.connect(_add_connected_player_name)
+	Lobby.player_connected.connect(add_connected_player_name)
 	Lobby.player_disconnected.connect(_remove_disconnected_player_name)
 
 
@@ -18,7 +18,7 @@ func set_player_name()->bool:
 		return false
 
 
-func _add_connected_player_name(_id, info)->void:
+func add_connected_player_name(_id, info)->void:
 	var text_edit : TextEdit = %ConnectedPlayersTextEdit
 	var player_name = info["name"]
 	if text_edit.text.find(player_name) == -1:

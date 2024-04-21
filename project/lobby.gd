@@ -48,8 +48,17 @@ func join_game(address = ""):
 # When the server decides to start the game from a UI scene,
 # do Lobby.load_game.rpc(filepath)
 @rpc("authority", "call_local", "reliable")
-func load_game(game_scene_path):
+func load_game(game_scene_path)->void:
 	get_tree().change_scene_to_file(game_scene_path)
+
+
+# When the server ends the game, it should do Lobby.load_lobby(filepath) to reset players
+# back to the lobby.
+@rpc("authority", "call_local", "reliable")
+func load_lobby(lobby_scene_path)->void:
+	get_tree().change_scene_to_file(lobby_scene_path)
+	for player in players:
+		$/root/MainMenu.add_connected_player_name(players.get(player)["name"])
 
 
 # Every peer will call this when they have loaded the game scene.

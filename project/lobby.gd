@@ -21,9 +21,11 @@ var players = {}
 # entered in a UI scene.
 var player_info = {
 	"name": "Name",
-	"board_position": "Position"
+	"board_position": "Position",
+	"connection_status": "Status"
 }
 var players_loaded = 0
+var game_started := false
 
 
 func _ready():
@@ -59,6 +61,7 @@ func player_loaded():
 
 # When a client connects to a server, send player info to the server
 func _on_connected_to_server():
+	player_info["connection_status"] = "Connected"
 	_server_receive_player_info.rpc_id(1, player_info)
 
 
@@ -80,6 +83,8 @@ func _on_player_connected(id):
 
 func _on_player_disconnected(id):
 	print("Player %d, disconnected!" % id)
+	if !game_started:
+		players.erase(id)
 
 
 func _on_connected_fail():

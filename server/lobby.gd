@@ -82,11 +82,11 @@ func _register_player(_new_player_id, _new_player_info):
 
 
 func _on_player_connected(id):
-	print("Player %d, connected!", id)
+	print("Player %d connected!" % id)
 
 
 func _on_player_disconnected(id):
-	print("Player %d, disconnected!", id)
+	print("Player %d, disconnected!" % id)
 
 
 func _on_connected_fail():

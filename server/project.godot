@@ -10,7 +10,7 @@ config_version=5
 
 [application]
 
-config/name="MultiplayerBoardGame"
+config/name="Server"
 config/features=PackedStringArray("4.2", "Forward Plus")
 config/icon="res://icon.svg"
 

@@ -73,6 +73,16 @@ func _server_receive_player_info(new_player_info: Dictionary)-> void:
 			players[sender_id] = new_player_info
 
 
+# Server method, called above, that sends new player info to other players
+func _send_new_player_info_to_players(new_player_id, info)->void:
+	for player in players:
+		print(players.get(player)["name"])
+		_register_player.rpc_id(player, new_player_id, info)
+
+		var existing_player_info = players.get(player)
+		_register_player.rpc_id(new_player_id, player, existing_player_info)
+
+
 func _try_player_reconnect(id, info)->void:
 	var player_reconnected := false
 	for player in players:
@@ -85,7 +95,7 @@ func _try_player_reconnect(id, info)->void:
 		var disconnected_player_info = disconnected_players.get(player)
 		if disconnected_player_info["name"] == info["name"]:
 			info["board_position"] = disconnected_player_info["board_position"]
-			_send_new_player_info_to_players(id, info)
+			_reconnect_clients(player, id, info)
 			players[id] = info
 			disconnected_players.erase(player)
 			player_reconnected = true
@@ -95,14 +105,19 @@ func _try_player_reconnect(id, info)->void:
 		multiplayer.multiplayer_peer.disconnect_peer(id, true)
 
 
-# Server method, called above, that sends new player info to other players
-func _send_new_player_info_to_players(new_player_id, info)->void:
+func _reconnect_clients(old_id, new_id, info):
 	for player in players:
-		print(players.get(player)["name"])
-		_register_player.rpc_id(player, new_player_id, info)
+		_reconnect_player.rpc_id(player, old_id, new_id, info)
 
 		var existing_player_info = players.get(player)
-		_register_player.rpc_id(new_player_id, player, existing_player_info)
+		_register_player.rpc_id(new_id, player, existing_player_info)
+
+
+# Client method that handles player reconnection
+@rpc("authority", "call_remote", "reliable")
+func _reconnect_player(_old_id, _new_id, _info):
+	pass
+
 
 # Client method that adds new players with info sent from server
 @rpc("authority", "call_remote", "reliable")

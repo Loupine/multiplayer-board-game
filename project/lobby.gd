@@ -77,6 +77,13 @@ func _register_player(new_player_id, new_player_info):
 	players[new_player_id] = new_player_info
 
 
+@rpc("authority", "call_remote", "reliable")
+func _reconnect_player(old_id, new_id, info):
+	$/root/Game.restore_player_functionality(old_id, new_id)
+	players.erase(old_id)
+	players[new_id] = info
+
+
 func _on_player_connected(id):
 	print("Player %d, connected!" % id)
 
@@ -85,6 +92,8 @@ func _on_player_disconnected(id):
 	print("Player %d, disconnected!" % id)
 	if !game_started:
 		players.erase(id)
+	else:
+		player_disconnected.emit(id)
 
 
 func _on_connected_fail():

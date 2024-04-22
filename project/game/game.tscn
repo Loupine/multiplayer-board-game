@@ -37,7 +37,8 @@ position = Vector2(972, 278)
 [node name="Pos10" type="Node2D" parent="BoardPositions"]
 position = Vector2(881, 136)
 
-[node name="Players" type="Node2D" parent="."]
+[node name="PlayerSpawner" type="MultiplayerSpawner" parent="."]
+unique_name_in_owner = true
+spawn_path = NodePath("../Players")
 
-[node name="DirectionalLight2D" type="DirectionalLight2D" parent="."]
-position = Vector2(124.475, 0.675)
+[node name="Players" type="Node2D" parent="."]

@@ -1,6 +1,46 @@
 [gd_scene load_steps=2 format=3 uid="uid://cb7xy1vbi3s7f"]
 
-[ext_resource type="Script" path="res://game/game.gd" id="1_d65hd"]
+[ext_resource type="Script" path="res://game/game.gd" id="1_lpfj5"]
 
 [node name="Game" type="Node2D"]
-script = ExtResource("1_d65hd")
+script = ExtResource("1_lpfj5")
+
+[node name="BoardPositions" type="Node2D" parent="."]
+unique_name_in_owner = true
+
+[node name="Pos1" type="Node2D" parent="BoardPositions"]
+position = Vector2(452, 166)
+
+[node name="Pos2" type="Node2D" parent="BoardPositions"]
+position = Vector2(651, 63)
+
+[node name="Pos3" type="Node2D" parent="BoardPositions"]
+position = Vector2(391, 298)
+
+[node name="Pos4" type="Node2D" parent="BoardPositions"]
+position = Vector2(426, 490)
+
+[node name="Pos5" type="Node2D" parent="BoardPositions"]
+position = Vector2(525, 582)
+
+[node name="Pos6" type="Node2D" parent="BoardPositions"]
+position = Vector2(675, 617)
+
+[node name="Pos7" type="Node2D" parent="BoardPositions"]
+position = Vector2(859, 568)
+
+[node name="Pos8" type="Node2D" parent="BoardPositions"]
+position = Vector2(978, 443)
+
+[node name="Pos9" type="Node2D" parent="BoardPositions"]
+position = Vector2(972, 278)
+
+[node name="Pos10" type="Node2D" parent="BoardPositions"]
+position = Vector2(881, 136)
+
+[node name="PlayerSpawner" type="MultiplayerSpawner" parent="."]
+unique_name_in_owner = true
+spawn_path = NodePath("../Players")
+
+[node name="Players" type="Node2D" parent="."]
+unique_name_in_owner = true

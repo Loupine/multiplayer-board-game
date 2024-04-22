@@ -161,9 +161,9 @@ func _on_player_connected_to_lobby()->void:
 func _on_player_disconnected(id)->void:
 	print("Player %d, disconnected!" % id)
 	if game_started:
-		if players.is_empty():
-			_reset_server()
-		else:
-			disconnected_players[id] = players.get(id)
-			disconnected_players.get(id)["connection_status"] = "Disconnected"
+		disconnected_players[id] = players.get(id)
+		disconnected_players.get(id)["connection_status"] = "Disconnected"
+
 	players.erase(id)
+	if players.is_empty():
+		_reset_server()

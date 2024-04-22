@@ -112,4 +112,11 @@ func _on_connected_fail():
 
 func _on_server_disconnected():
 	multiplayer.multiplayer_peer = null
+	game_started = false
 	players.clear()
+	player_info = {
+		"name": "Name",
+		"board_position": "Position",
+		"connection_status": "Status"
+	}
+	load_lobby("res://main_menu.tscn")

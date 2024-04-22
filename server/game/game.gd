@@ -37,10 +37,7 @@ func create_player(player_id)->CharacterBody2D:
 	player_body.position = %BoardPositions.get_child(0).position + (
 							Vector2(random_generator.randi_range(-100, 100),
 									random_generator.randi_range(-100, 100)))
-	var modulate_color := Color(random_generator.randi_range(1, 255),
-								random_generator.randi_range(1, 255),
-								random_generator.randi_range(1, 255),
-								255)
+	var modulate_color := Color("blue")
 	player_body.set_modulate(modulate_color)
 	return player_body
 

@@ -9,7 +9,6 @@ func _enter_tree():
 
 func set_player_camera()->void:
 	%Camera2D.make_current()
-	print("Camera set")
 
 
 func show_controls()->void:
@@ -19,12 +18,10 @@ func show_controls()->void:
 
 
 func on_finished_moving()->void:
-	print("finished moving")
 	%EndTurnButton.show()
 
 
 func _on_roll_for_movement_button_pressed():
-	print("Running")
 	%RollForMovementButton.hide()
 	$/root/Game.action_started.rpc_id(1, "ROLL")
 

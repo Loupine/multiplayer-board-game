@@ -13,32 +13,33 @@ func _ready():
 	%PlayerSpawner.add_spawnable_scene("res://player/player.tscn")
 
 
-# The server sends the generated turn order to clients
+# The client receives the randomized turn order from the server on setup
 @rpc("authority", "call_remote", "reliable")
 func _send_turn_order(order: Array)->void:
 	turn_order = order
 
 
-# The server starts the next player's turn
+# The server starts the next player's turn and notifies all clients whose turn it is
 @rpc("authority", "call_remote", "reliable")
 func _start_player_turn(player_id)->void:
-	_set_player_camera(player_id)
-	if multiplayer.get_unique_id() == player_id:
+	_set_player_camera(player_id) # Show the player's camera to all clients
+	if multiplayer.get_unique_id() == player_id: 
 		_start_turn()
 	else:
 		print("%s's turn started." % Lobby.players.get(player_id)["name"])
 
 
 func _set_player_camera(player_id)->void:
-	# Doing %Players.find_child(str(player_id)) erroneously returns null so we 
-	# unfortunately have to loop through all the players
+	# Doing %Players.find_child(str(player_id)) returns null so we loop through 
+	# all the players until we find one with a matching name
 	for child in %Players.get_children():
 		if child.name == str(player_id):
-			current_player_node = child
+			current_player_node = child # Set the current player node for future reference
 			child.call("set_player_camera")
 			break
 
 
+# Only called on the player whose turn it is
 func _start_turn():
 	print("Turn started")
 	_show_player_controls()
@@ -48,28 +49,33 @@ func _show_player_controls()->void:
 	current_player_node.call("show_controls")
 
 
-# Client should call this once their turn is over and all turn actions are finished or skipped
+# This notifies the server to start the next player's turn when the current turn finishes. 
+# It is currently called in player.gd when the end turn button is pressed.
 @rpc("any_peer", "call_remote", "reliable")
 func turn_finished()->void:
 	pass
 
 
-# Client should call this when certain actions finish during their turn
+# Client should call this when they want to start an action. This tells the server
+# which action to process and which data to send for that action. If a player requests
+# an action, the server will only process the action if it is that player's turn
 @rpc("any_peer", "call_remote", "reliable")
-func action_started(_action_name, _player_id)->void:
+func action_started(_action_name)->void:
 	pass
 
 
-# Server calls this when an action is started by the client and should send the 
-# action result to all clients
+# Server processes actions requested by players and tells all clients what action
+# was requested, which player requested it, and any data necessary to complete the
+# action.
 @rpc("authority", "call_remote", "reliable")
 func _action_processed(action_name, action_result: Variant, player_id)->void:
 	match action_name:
 		"ROLL":
 			var roll : int = action_result
-			print("Roll: %d" % roll)
-			if multiplayer.get_unique_id() == player_id:
+			if multiplayer.get_unique_id() == player_id: # If this client is the player, do the action
 				for i in range(roll):
+					# Wait for each loop iteration to finish so the player visits every board position
+					# if await is removed, the player will travel to the final position immediately
 					await _move_player_to_next_board_position(player_id)
 				current_player_node.call("on_finished_moving")
 			else:
@@ -82,8 +88,12 @@ func _move_player_to_next_board_position(player_id)->void:
 	if multiplayer.get_unique_id() == player_id:
 		var next_position := _calc_next_board_position()
 		var tween = current_player_node.create_tween()
+		# Gradually move to the next position with a property tweener over 2.5 seconds.
 		tween.tween_property(current_player_node, "position", 
 								next_position, 2.5)
+		# Wait for a timer signal to ensure processing is stopped until the next position is reached
+		# If await is removed here or in the previous method, the players will not go to
+		# each position and will instead go directly to the final one.
 		await get_tree().create_timer(2.5).timeout
 
 

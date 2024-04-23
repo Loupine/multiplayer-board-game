@@ -69,7 +69,8 @@ func turn_finished()->void:
 
 # Client should call this when certain actions finish during their turn
 @rpc("any_peer", "call_remote", "reliable")
-func action_started(action_name, player_id)->void:
+func action_started(action_name)->void:
+	var player_id = multiplayer.get_remote_sender_id()
 	if player_id == turn_order[current_turn_index]:
 		match action_name:
 			"ROLL":

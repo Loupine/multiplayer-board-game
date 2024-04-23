@@ -26,7 +26,7 @@ func on_finished_moving()->void:
 func _on_roll_for_movement_button_pressed():
 	print("Running")
 	%RollForMovementButton.hide()
-	$/root/Game.action_started.rpc_id(1, "ROLL", multiplayer.get_unique_id())
+	$/root/Game.action_started.rpc_id(1, "ROLL")
 
 
 func _on_end_turn_button_pressed():

@@ -7,19 +7,19 @@ signal player_connected(peer_id, player_info)
 signal player_disconnected(peer_id)
 signal server_disconnected
 
-const PORT = 6029
-const DEFAULT_SERVER_IP = "localhost" # IPv4 localhost
-const MAX_CONNECTIONS = 20
+const PORT := 6029
+const DEFAULT_SERVER_IP := "localhost" # IPv4 localhost
+const MAX_CONNECTIONS := 20
 
 # This will contain player info for every player,
 # with the keys being each player's unique IDs.
-var players : Dictionary = {}
+var players :Dictionary= {}
 
 # This is the local player info. This should be modified locally
 # before the connection is made. It will be passed to every other peer.
 # For example, the value of "name" can be set to something the player
 # entered in a UI scene.
-var player_info = {
+var player_info :Dictionary= {
 	"name": "Name",
 	"board_position": 0,
 	"connection_status": "Status"
@@ -35,27 +35,28 @@ func _ready():
 	multiplayer.server_disconnected.connect(_on_server_disconnected)
 
 
-func join_game(address = ""):
+func join_game(address = "")->Variant:
 	if address.is_empty():
 		address = DEFAULT_SERVER_IP
-	var peer = ENetMultiplayerPeer.new()
-	var error = peer.create_client(address, PORT)
+	var peer := ENetMultiplayerPeer.new()
+	var error := peer.create_client(address, PORT)
 	if error:
 		return error
 	multiplayer.multiplayer_peer = peer
+	return
 
 
 # When the server decides to start the game from a UI scene,
 # do Lobby.load_game.rpc(filepath)
 @rpc("authority", "call_local", "reliable")
-func load_game(game_scene_path)->void:
+func load_game(game_scene_path: String)->void:
 	get_tree().change_scene_to_file(game_scene_path)
 
 
 # When the server ends the game, it should do Lobby.load_lobby(filepath) to reset players
 # back to the lobby.
 @rpc("authority", "call_local", "reliable")
-func load_lobby(lobby_scene_path)->void:
+func load_lobby(lobby_scene_path: String)->void:
 	get_tree().change_scene_to_file(lobby_scene_path)
 	for player in players:
 		$/root/MainMenu.add_connected_player_name(players.get(player)["name"])
@@ -63,41 +64,41 @@ func load_lobby(lobby_scene_path)->void:
 
 # Every peer will call this when they have loaded the game scene.
 @rpc("any_peer", "call_local", "reliable")
-func player_loaded():
+func player_loaded()->void:
 	pass
 
 
 # When a client connects to a server, send player info to the server
-func _on_connected_to_server():
+func _on_connected_to_server()->void:
 	player_info["connection_status"] = "Connected"
 	_server_receive_player_info.rpc_id(1, player_info)
 
 
 # When server receives new player info from a client, send that info to all other players
 @rpc("any_peer", "call_remote", "reliable")
-func _server_receive_player_info(_new_player_info)-> void:
+func _server_receive_player_info(_new_player_info: Dictionary)->void:
 	pass
 
 
 # Client method that adds new players with info sent from server
 @rpc("authority", "call_remote", "reliable")
-func _register_player(new_player_id, new_player_info):
+func _register_player(new_player_id: int, new_player_info: Dictionary)->void:
 	players[new_player_id] = new_player_info
 	player_connected.emit(new_player_id, new_player_info)
 
 
 @rpc("authority", "call_remote", "reliable")
-func _reconnect_player(old_id, new_id, info):
+func _reconnect_player(old_id: int, new_id: int, info: Dictionary)->void:
 	$/root/Game.restore_player_functionality(old_id, new_id)
 	players.erase(old_id)
 	players[new_id] = info
 
 
-func _on_player_connected(id):
+func _on_player_connected(id: int)->void:
 	print("Player %d, connected!" % id)
 
 
-func _on_player_disconnected(id):
+func _on_player_disconnected(id: int)->void:
 	print("Player %d, disconnected!" % id)
 	player_disconnected.emit(id)
 	if !game_started:
@@ -105,12 +106,12 @@ func _on_player_disconnected(id):
 	
 
 
-func _on_connected_fail():
+func _on_connected_fail()->void:
 	print("Connection failed. Please try again.")
 	multiplayer.multiplayer_peer = null
 
 
-func _on_server_disconnected():
+func _on_server_disconnected()->void:
 	multiplayer.multiplayer_peer = null
 	game_started = false
 	players.clear()

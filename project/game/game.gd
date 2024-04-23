@@ -21,7 +21,7 @@ func _send_turn_order(order: Array)->void:
 
 # The server starts the next player's turn and notifies all clients whose turn it is
 @rpc("authority", "call_remote", "reliable")
-func _start_player_turn(player_id)->void:
+func _start_player_turn(player_id: int)->void:
 	_set_player_camera(player_id) # Show the player's camera to all clients
 	if multiplayer.get_unique_id() == player_id: 
 		_start_turn()
@@ -29,7 +29,7 @@ func _start_player_turn(player_id)->void:
 		print("%s's turn started." % Lobby.players.get(player_id)["name"])
 
 
-func _set_player_camera(player_id)->void:
+func _set_player_camera(player_id: int)->void:
 	# Doing %Players.find_child(str(player_id)) returns null so we loop through 
 	# all the players until we find one with a matching name
 	for child in %Players.get_children():
@@ -60,7 +60,7 @@ func turn_finished()->void:
 # which action to process and which data to send for that action. If a player requests
 # an action, the server will only process the action if it is that player's turn
 @rpc("any_peer", "call_remote", "reliable")
-func action_started(_action_name)->void:
+func action_started(_action_name: String)->void:
 	pass
 
 
@@ -68,10 +68,10 @@ func action_started(_action_name)->void:
 # was requested, which player requested it, and any data necessary to complete the
 # action.
 @rpc("authority", "call_remote", "reliable")
-func _action_processed(action_name, action_result: Variant, player_id)->void:
+func _action_processed(action_name: String, action_result: Variant, player_id: int)->void:
 	match action_name:
 		"ROLL":
-			var roll : int = action_result
+			var roll :int= action_result
 			if multiplayer.get_unique_id() == player_id: # If this client is the player, do the action
 				for i in range(roll):
 					# Wait for each loop iteration to finish so the player visits every board position
@@ -79,15 +79,15 @@ func _action_processed(action_name, action_result: Variant, player_id)->void:
 					await _move_player_to_next_board_position(player_id)
 				current_player_node.call("on_finished_moving")
 			else:
-				var current_position = Lobby.players.get(player_id)["board_position"]
+				var current_position :int= Lobby.players.get(player_id)["board_position"]
 				Lobby.players.get(player_id)["board_position"] = (
 										(current_position + roll)  % TOTAL_BOARD_POSITIONS)
 
 
-func _move_player_to_next_board_position(player_id)->void:
+func _move_player_to_next_board_position(player_id: int)->void:
 	if multiplayer.get_unique_id() == player_id:
 		var next_position := _calc_next_board_position()
-		var tween = current_player_node.create_tween()
+		var tween := current_player_node.create_tween()
 		# Gradually move to the next position with a property tweener over 2.5 seconds.
 		tween.tween_property(current_player_node, "position", 
 								next_position, 2.5)
@@ -98,8 +98,8 @@ func _move_player_to_next_board_position(player_id)->void:
 
 
 func _calc_next_board_position()->Vector2:
-	var board_position_index = Lobby.player_info["board_position"]
-	var next_position_index = (board_position_index + 1) % TOTAL_BOARD_POSITIONS
+	var board_position_index :int= Lobby.player_info["board_position"]
+	var next_position_index := (board_position_index + 1) % TOTAL_BOARD_POSITIONS
 	Lobby.player_info["board_position"] = next_position_index
 	return %BoardPositions.get_child(next_position_index).position
 
@@ -116,6 +116,6 @@ func _game_finished()->void:
 	pass
 
 
-func _on_player_spawner_spawned(node):
-	var spawned_player = node
+func _on_player_spawner_spawned(node: CharacterBody2D)->void:
+	var spawned_player := node
 	spawned_player.position = %BoardPositions.get_child(0).position

@@ -9,7 +9,6 @@ var turn_order : Array = []
 var current_turn_index := 0
 var round_number := 1
 var players = Lobby.players
-var current_player_node: Node
 
 
 func _ready():
@@ -17,6 +16,7 @@ func _ready():
 	randomize()
 
 
+# Called exclusively on the server to determine player order and start the game
 func start_game()->void:
 	spawn_players()
 	_determine_player_turn_order()
@@ -24,6 +24,9 @@ func start_game()->void:
 	_start_player_turn.rpc(turn_order[current_turn_index])
 
 
+# Player spawning is synced via the PlayerSpawner node in the game scene.
+# Adding players directly to the Players node automatically spawns them on any
+# connected clients.
 func spawn_players()->void:
 	for player in players:
 		var player_body := create_player(player)
@@ -36,15 +39,17 @@ func create_player(player_id)->CharacterBody2D:
 	return player_body
 
 
-# The server sends the generated turn order to clients
+# The server sends the randomized turn order to clients
 @rpc("authority", "call_remote", "reliable")
 func _send_turn_order(_order)->void:
 	pass
 
 
-# The server starts the next player's turn
+# The server starts the next player's turn and notifies all clients whose turn it is
 @rpc("authority", "call_local", "reliable")
 func _start_player_turn(player_id)->void:
+	# Set player camera on the server. Useful for developmental debugging.
+	# Should be removed for production ready builds.
 	_set_player_camera(player_id)
 
 
@@ -53,35 +58,39 @@ func _set_player_camera(player_id)->void:
 	# unfortunately have to loop through all the players
 	for child in %Players.get_children():
 		if child.name == str(player_id):
-			current_player_node = child
 			child.call("set_player_camera")
 			break
 
 
-# Client should call this once their turn is over and all turn actions are finished or skipped
+# This notifies the server to start the next player's turn when the current one finishes. 
 @rpc("any_peer", "call_remote", "reliable")
 func turn_finished()->void:
+	# Continue only if it is the sender's turn
 	if multiplayer.get_remote_sender_id() == turn_order[current_turn_index]:
-		current_turn_index = 0 if current_turn_index == turn_order.size() -1 else current_turn_index + 1
+		current_turn_index = (current_turn_index + 1) % turn_order.size()
 		turn_finsihed.emit()
-		_start_player_turn.rpc(turn_order[current_turn_index])
+		_start_player_turn.rpc(turn_order[current_turn_index]) # Start the next player's turn
 
 
-# Client should call this when certain actions finish during their turn
+# Client should call this when they want to start an action. This tells the server
+# which action to process and which data to send for that action. If a player requests
+# an action, the server will only process the action if it is that player's turn
 @rpc("any_peer", "call_remote", "reliable")
 func action_started(action_name)->void:
 	var player_id = multiplayer.get_remote_sender_id()
 	if player_id == turn_order[current_turn_index]:
 		match action_name:
 			"ROLL":
+				# Determine a number of spaces for the player to move
 				var random_roll = randi_range(1, 6)
 				_action_processed.rpc(action_name, random_roll, player_id)
 	else:
 		print("It is not this player's turn.")
 
 
-# Server calls this when an action is started by the client and should send the 
-# action result to all clients
+# Server processes actions requested by players and tells all clients what action
+# was requested, which player requested it, and any data necessary to complete the
+# action. Called in the above action_started method
 @rpc("authority", "call_remote", "reliable")
 func _action_processed(_action_name, _action_result: Variant, _player_id)->void:
 	pass

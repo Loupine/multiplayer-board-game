@@ -21,7 +21,7 @@ var players : Dictionary = {}
 # entered in a UI scene.
 var player_info = {
 	"name": "Name",
-	"board_position": "Position",
+	"board_position": 0,
 	"connection_status": "Status"
 }
 var game_started := false
@@ -116,7 +116,7 @@ func _on_server_disconnected():
 	players.clear()
 	player_info = {
 		"name": "Name",
-		"board_position": "Position",
+		"board_position": 0,
 		"connection_status": "Status"
 	}
 	load_lobby("res://main_menu.tscn")

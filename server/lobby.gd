@@ -131,12 +131,15 @@ func _reconnect_clients(old_id, new_id, info)->void:
 		# Re-register existing players with the reconnected one.
 		var existing_player_info = players.get(player)
 		_register_player.rpc_id(new_id, player, existing_player_info)
+	_reconnect_player(old_id, new_id, info)
 
 
 # Client method that handles player reconnection
 @rpc("authority", "call_remote", "reliable")
-func _reconnect_player(_old_id, _new_id, _info)->void:
-	pass
+func _reconnect_player(old_id, new_id, _info)->void:
+	var player_body = $/root/Game.find_child("players").find_child(str(old_id))
+	player_body.name = str(new_id)
+	player_body.set_multiplayer_authority(new_id)
 
 
 # Client method that adds new players with info sent from server

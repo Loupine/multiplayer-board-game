@@ -9,10 +9,10 @@ script = ExtResource("1_lpfj5")
 unique_name_in_owner = true
 
 [node name="Pos1" type="Node2D" parent="BoardPositions"]
-position = Vector2(452, 166)
+position = Vector2(707, 66)
 
 [node name="Pos2" type="Node2D" parent="BoardPositions"]
-position = Vector2(651, 63)
+position = Vector2(496, 149)
 
 [node name="Pos3" type="Node2D" parent="BoardPositions"]
 position = Vector2(391, 298)

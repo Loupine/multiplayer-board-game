@@ -1,4 +1,6 @@
-[gd_scene load_steps=5 format=3 uid="uid://dt4pktbu7pd8k"]
+[gd_scene load_steps=6 format=3 uid="uid://dt4pktbu7pd8k"]
+
+[ext_resource type="Script" path="res://player/player.gd" id="1_prbh2"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_yyrtc"]
 radius = 19.6469
@@ -14,13 +16,15 @@ fill_to = Vector2(0, 0)
 [sub_resource type="SceneReplicationConfig" id="SceneReplicationConfig_nl672"]
 properties/0/path = NodePath(".:position")
 properties/0/spawn = true
-properties/0/replication_mode = 2
+properties/0/replication_mode = 1
 properties/1/path = NodePath(".:modulate")
 properties/1/spawn = true
-properties/1/replication_mode = 2
+properties/1/replication_mode = 1
 
 [node name="Player" type="CharacterBody2D"]
+collision_mask = 0
 motion_mode = 1
+script = ExtResource("1_prbh2")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("CircleShape2D_yyrtc")
@@ -29,4 +33,52 @@ shape = SubResource("CircleShape2D_yyrtc")
 texture = SubResource("GradientTexture2D_qpln0")
 
 [node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="."]
+unique_name_in_owner = true
 replication_config = SubResource("SceneReplicationConfig_nl672")
+
+[node name="Camera2D" type="Camera2D" parent="."]
+unique_name_in_owner = true
+zoom = Vector2(2, 2)
+
+[node name="Controls" type="Control" parent="Camera2D"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 3
+anchors_preset = 0
+offset_left = -320.0
+offset_top = -180.0
+offset_right = 320.0
+offset_bottom = 180.0
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Camera2D/Controls"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+alignment = 2
+
+[node name="HBoxContainer" type="HBoxContainer" parent="Camera2D/Controls/VBoxContainer"]
+custom_minimum_size = Vector2(0, 95.655)
+layout_mode = 2
+alignment = 1
+
+[node name="RollForMovementButton" type="Button" parent="Camera2D/Controls/VBoxContainer/HBoxContainer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(163.77, 43.69)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+text = "Roll for Movement"
+
+[node name="EndTurnButton" type="Button" parent="Camera2D/Controls/VBoxContainer/HBoxContainer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(163.77, 43.69)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+text = "End Turn"
+
+[connection signal="pressed" from="Camera2D/Controls/VBoxContainer/HBoxContainer/RollForMovementButton" to="." method="_on_roll_for_movement_button_pressed"]
+[connection signal="pressed" from="Camera2D/Controls/VBoxContainer/HBoxContainer/EndTurnButton" to="." method="_on_end_turn_button_pressed"]

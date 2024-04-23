@@ -9,7 +9,6 @@ signal server_disconnected
 
 const PORT := 6029
 const DEFAULT_SERVER_IP := "localhost" # IPv4 localhost
-const MAX_CONNECTIONS := 20
 
 # This will contain player info for every player,
 # with the keys being each player's unique IDs.

@@ -5,10 +5,10 @@ signal turn_finsihed()
 signal round_finished(number)
 signal game_finished()
 
-var turn_order : Array = []
+var turn_order :Array= []
 var current_turn_index := 0
 var round_number := 1
-var players = Lobby.players
+var players :Dictionary= Lobby.players
 
 
 func _ready():
@@ -33,7 +33,7 @@ func spawn_players()->void:
 		%Players.add_child(player_body)
 
 
-func create_player(player_id)->CharacterBody2D:
+func create_player(player_id: int)->CharacterBody2D:
 	var player_body := preload("res://player/player.tscn").instantiate()
 	player_body.name = str(player_id)
 	return player_body
@@ -41,19 +41,19 @@ func create_player(player_id)->CharacterBody2D:
 
 # The server sends the randomized turn order to clients
 @rpc("authority", "call_remote", "reliable")
-func _send_turn_order(_order)->void:
+func _send_turn_order(_order: Array)->void:
 	pass
 
 
 # The server starts the next player's turn and notifies all clients whose turn it is
 @rpc("authority", "call_local", "reliable")
-func _start_player_turn(player_id)->void:
+func _start_player_turn(player_id: int)->void:
 	# Set player camera on the server. Useful for developmental debugging.
 	# Should be removed for production ready builds.
 	_set_player_camera(player_id)
 
 
-func _set_player_camera(player_id)->void:
+func _set_player_camera(player_id: int)->void:
 	# Doing %Players.find_child(str(player_id)) erroneously returns null so we 
 	# unfortunately have to loop through all the players
 	for child in %Players.get_children():
@@ -76,13 +76,13 @@ func turn_finished()->void:
 # which action to process and which data to send for that action. If a player requests
 # an action, the server will only process the action if it is that player's turn
 @rpc("any_peer", "call_remote", "reliable")
-func action_started(action_name)->void:
-	var player_id = multiplayer.get_remote_sender_id()
+func action_started(action_name: String)->void:
+	var player_id := multiplayer.get_remote_sender_id()
 	if player_id == turn_order[current_turn_index]:
 		match action_name:
 			"ROLL":
 				# Determine a number of spaces for the player to move
-				var random_roll = randi_range(1, 6)
+				var random_roll := randi_range(1, 6)
 				_action_processed.rpc(action_name, random_roll, player_id)
 	else:
 		print("It is not this player's turn.")
@@ -92,7 +92,7 @@ func action_started(action_name)->void:
 # was requested, which player requested it, and any data necessary to complete the
 # action. Called in the above action_started method
 @rpc("authority", "call_remote", "reliable")
-func _action_processed(_action_name, _action_result: Variant, _player_id)->void:
+func _action_processed(_action_name: String, _action_result: Variant, _player_id: int)->void:
 	pass
 
 

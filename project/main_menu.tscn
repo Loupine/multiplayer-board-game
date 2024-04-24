@@ -45,6 +45,13 @@ size_flags_horizontal = 4
 size_flags_vertical = 4
 text = "Connect to Server"
 
+[node name="ReadyCheckbox" type="CheckBox" parent="Control/VBoxContainer"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+size_flags_horizontal = 4
+text = "Ready?"
+
 [node name="HBoxContainer" type="HBoxContainer" parent="Control"]
 custom_minimum_size = Vector2(0, 720)
 layout_mode = 1
@@ -82,3 +89,4 @@ dialog_close_on_escape = false
 
 [connection signal="text_changed" from="Control/VBoxContainer/NameTextEdit" to="." method="_on_name_text_changed"]
 [connection signal="pressed" from="Control/VBoxContainer/ConnectButton" to="." method="_on_connect_button_pressed"]
+[connection signal="toggled" from="Control/VBoxContainer/ReadyCheckbox" to="." method="_on_ready_checkbox_toggled"]

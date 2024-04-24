@@ -5,7 +5,7 @@ signal turn_finsihed()
 signal round_finished()
 signal game_finished()
 
-const MAX_ROUNDS := 2 # How many times will each player have a turn
+const MAX_ROUNDS := 1 # How many times will each player have a turn
 
 var turn_order :Array= []
 var current_turn_index := 0

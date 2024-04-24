@@ -59,7 +59,9 @@ func load_game(game_scene_path: String)->void:
 func load_lobby(lobby_scene_path: String)->void:
 	get_tree().change_scene_to_file(lobby_scene_path)
 	await menu_loaded
+	player_info["board_position"] = 0
 	for player in players:
+		players.get(player)["board_position"] = 0
 		$/root/MainMenu.add_connected_player_name(player, players.get(player))
 
 
@@ -95,6 +97,21 @@ func _reconnect_player(old_id: int, new_id: int, info: Dictionary)->void:
 	players[new_id] = info
 
 
+# Server notifies clients when the lobby is full.
+@rpc("authority", "call_remote", "reliable")
+func _notify_full_lobby()->void:
+	if $/root/MainMenu == null:
+		await menu_loaded
+	$/root/MainMenu.toggle_ready_checkbox_visibility(true)
+
+
+# Clients notify the server when they toggle the ready box. When all players are
+# ready the game will start.
+@rpc("any_peer", "call_remote", "reliable")
+func notify_player_ready()->void:
+	pass
+
+
 func _on_player_connected(id: int)->void:
 	print("Player %d, connected!" % id)
 
@@ -103,8 +120,8 @@ func _on_player_disconnected(id: int)->void:
 	print("Player %d, disconnected!" % id)
 	player_disconnected.emit(id)
 	if !game_started:
+		$/root/MainMenu.toggle_ready_checkbox_visibility(false)
 		players.erase(id)
-	
 
 
 func _on_connected_fail()->void:

@@ -19,6 +19,11 @@ func set_player_name()->bool:
 		return false
 
 
+func toggle_ready_checkbox_visibility(value: bool)->void:
+	%ReadyCheckbox.set_visible(value)
+	%ReadyCheckbox.button_pressed = false
+
+
 func add_connected_player_name(_id: int, info: Dictionary)->void:
 	var text_edit :TextEdit= %ConnectedPlayersTextEdit
 	var player_name :String= info["name"]
@@ -47,3 +52,8 @@ func _on_connect_button_pressed()->void:
 		Lobby.join_game()
 	else:
 		pass
+
+
+func _on_ready_checkbox_toggled(toggled_on):
+	if toggled_on:
+		Lobby.notify_player_ready.rpc_id(1)

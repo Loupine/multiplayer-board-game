@@ -13,6 +13,7 @@ const MAX_CONNECTIONS := 3
 # with the keys being each player's unique IDs.
 var players :Dictionary= {}
 var disconnected_players :Dictionary= {}
+var players_ready := []
 var players_loaded := 0
 var game_started := false
 
@@ -47,6 +48,11 @@ func load_lobby(lobby_scene_path: String)->void:
 	get_tree().change_scene_to_file(lobby_scene_path)
 	game_started = false
 	players_loaded = 0
+	players_ready.clear()
+	for player in players:
+		players.get(player)["board_position"] = 0
+	if multiplayer.get_peers().size() == MAX_CONNECTIONS:
+		_notify_full_lobby.rpc()
 
 
 # Every peer will call this when they have loaded the game scene.
@@ -148,6 +154,22 @@ func _register_player(_new_player_id: int, _new_player_info: Dictionary)->void:
 	pass
 
 
+# Server notifies clients when the lobby is full.
+@rpc("authority", "call_remote", "reliable")
+func _notify_full_lobby()->void:
+	pass
+
+
+# Clients notify the server when they toggle the ready box. When all players are
+# ready the game will start.
+@rpc("any_peer", "call_remote", "reliable")
+func notify_player_ready()->void:
+	if not players_ready.has(multiplayer.get_remote_sender_id()):
+		players_ready.append(multiplayer.get_remote_sender_id())
+		if players_ready.size() == MAX_CONNECTIONS:
+			load_game.rpc("res://game/game.tscn")
+
+
 func _reset_server()->void:
 	get_tree().change_scene_to_file("res://main_menu.tscn")
 	game_started = false
@@ -158,7 +180,7 @@ func _reset_server()->void:
 
 func _on_player_connected_to_lobby()->void:
 	if players.size() == MAX_CONNECTIONS:
-		load_game.rpc("res://game/game.tscn")
+		_notify_full_lobby.rpc()
 
 
 func _on_player_disconnected(id: int)->void:
@@ -167,6 +189,7 @@ func _on_player_disconnected(id: int)->void:
 		disconnected_players[id] = players.get(id)
 		disconnected_players.get(id)["connection_status"] = "Disconnected"
 
+	players_ready.clear()
 	players.erase(id)
 	if players.is_empty():
 		_reset_server()

@@ -51,6 +51,7 @@ func join_game(address = "")->Variant:
 @rpc("authority", "call_local", "reliable")
 func load_game(game_scene_path: String)->void:
 	get_tree().change_scene_to_file(game_scene_path)
+	game_started = true
 
 
 # When the server ends the game, it should do Lobby.load_lobby(filepath) to reset players
@@ -100,7 +101,7 @@ func _reconnect_player(old_id: int, new_id: int, info: Dictionary)->void:
 # Server notifies clients when the lobby is full.
 @rpc("authority", "call_remote", "reliable")
 func _notify_full_lobby()->void:
-	if $/root/MainMenu == null:
+	if get_node_or_null("/root/MainMenu") == null:
 		await menu_loaded
 	$/root/MainMenu.toggle_ready_checkbox_visibility(true)
 

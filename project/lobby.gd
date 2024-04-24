@@ -6,6 +6,7 @@ extends Node
 signal player_connected(peer_id, player_info)
 signal player_disconnected(peer_id)
 signal server_disconnected
+signal menu_loaded
 
 const PORT := 6029
 const DEFAULT_SERVER_IP := "localhost" # IPv4 localhost
@@ -57,8 +58,9 @@ func load_game(game_scene_path: String)->void:
 @rpc("authority", "call_local", "reliable")
 func load_lobby(lobby_scene_path: String)->void:
 	get_tree().change_scene_to_file(lobby_scene_path)
+	await menu_loaded
 	for player in players:
-		$/root/MainMenu.add_connected_player_name(players.get(player)["name"])
+		$/root/MainMenu.add_connected_player_name(player, players.get(player))
 
 
 # Every peer will call this when they have loaded the game scene.

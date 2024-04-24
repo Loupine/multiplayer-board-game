@@ -4,6 +4,7 @@ extends Node2D
 func _ready():
 	Lobby.player_connected.connect(add_connected_player_name)
 	Lobby.player_disconnected.connect(_remove_disconnected_player_name)
+	Lobby.menu_loaded.emit()
 
 
 func set_player_name()->bool:

@@ -2,8 +2,10 @@ extends Node2D
 
 signal action_finished()
 signal turn_finsihed()
-signal round_finished(number)
+signal round_finished()
 signal game_finished()
+
+const MAX_ROUNDS := 2 # How many times will each player have a turn
 
 var turn_order :Array= []
 var current_turn_index := 0
@@ -13,6 +15,8 @@ var players :Dictionary= Lobby.players
 
 func _ready():
 	%PlayerSpawner.add_spawnable_scene("res://player/player.tscn")
+	connect("round_finished", _on_round_finished)
+	connect("game_finished", _on_game_finished)
 	randomize()
 
 
@@ -69,6 +73,9 @@ func turn_finished()->void:
 	if multiplayer.get_remote_sender_id() == turn_order[current_turn_index]:
 		current_turn_index = (current_turn_index + 1) % turn_order.size()
 		turn_finsihed.emit()
+		if current_turn_index == 0:
+			round_finished.emit()
+		
 		_start_player_turn.rpc(turn_order[current_turn_index]) # Start the next player's turn
 
 
@@ -99,12 +106,19 @@ func _action_processed(_action_name: String, _action_result: Variant, _player_id
 # The server determines when the round finishes and rpc's the clients
 @rpc("authority", "call_local", "reliable")
 func _round_finished()->void:
-	pass
+	if round_number == MAX_ROUNDS:
+		game_finished.emit()
+	round_number += 1
+	print("Round %d started" % round_number)
+	
 
 
-# The server determines when the game finishes and rpc's the clients
+# The server determines when the game finishes and rpc's the clients.
 @rpc("authority", "call_local", "reliable")
 func _game_finished()->void:
+	# Load the lobby for all peers. Should be changed if custom logic is desired
+	# on the clients when a game ends. This custom logic should replace the pass
+	# line on clients and the below rpc call should be moved elsewhere
 	Lobby.load_lobby.rpc("res://main_menu.tscn")
 
 
@@ -112,3 +126,11 @@ func _determine_player_turn_order():
 	for player in players:
 		turn_order.append(player)
 	turn_order.shuffle()
+
+
+func _on_round_finished()->void:
+	_round_finished.rpc()
+
+
+func _on_game_finished()->void:
+	_game_finished.rpc()

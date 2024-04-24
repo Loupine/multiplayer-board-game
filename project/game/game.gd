@@ -1,11 +1,10 @@
 extends Node2D
 
-signal player_finished_moving
-
 const TOTAL_BOARD_POSITIONS := 10
 
 var turn_order :Array
 var current_player_node :Node
+var round_number := 1
 
 
 func _ready():
@@ -74,8 +73,9 @@ func _action_processed(action_name: String, action_result: Variant, player_id: i
 			var roll :int= action_result
 			if multiplayer.get_unique_id() == player_id: # If this client is the player, do the action
 				for i in range(roll):
-					# Wait for each loop iteration to finish so the player visits every board position
-					# if await is removed, the player will travel to the final position immediately
+					# Wait for each loop iteration to finish so the player visits 
+					# every board position. If await is removed, the player will
+					# skip to the final position
 					await _move_player_to_next_board_position(player_id)
 				current_player_node.call("on_finished_moving")
 			else:
@@ -90,11 +90,11 @@ func _move_player_to_next_board_position(player_id: int)->void:
 		var tween := current_player_node.create_tween()
 		# Gradually move to the next position with a property tweener over 2.5 seconds.
 		tween.tween_property(current_player_node, "position", 
-								next_position, 2.5)
-		# Wait for a timer signal to ensure processing is stopped until the next position is reached
-		# If await is removed here or in the previous method, the players will not go to
-		# each position and will instead go directly to the final one.
-		await get_tree().create_timer(2.5).timeout
+								next_position, 1.0)
+		# Wait for a timer signal to ensure processing is stopped until the next 
+		# position is reached. If await is removed here or in the 'ROLL' action, 
+		# the players will skip to the final position w/o visiting the other ones.
+		await get_tree().create_timer(1.0).timeout
 
 
 func _calc_next_board_position()->Vector2:
@@ -107,10 +107,14 @@ func _calc_next_board_position()->Vector2:
 # The server determines when the round finishes and rpc's the clients
 @rpc("authority", "call_local", "reliable")
 func _round_finished()->void:
-	pass
+	round_number += 1
 
 
-# The server determines when the game finishes and rpc's the clients
+# The server determines when the game finishes and rpc's the clients. Currently
+# the server calls Lobby.load_lobby.rpc on all clients in its _game_finished rpc
+# so this will be bypassed on clients and the lobby will load instead. This could
+# be changed if custom logic is desired when the game ends besides just loading the
+# lobby
 @rpc("authority", "call_local", "reliable")
 func _game_finished()->void:
 	pass

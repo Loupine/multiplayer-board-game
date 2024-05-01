@@ -1,4 +1,4 @@
-[gd_scene load_steps=6 format=3 uid="uid://dt4pktbu7pd8k"]
+[gd_scene load_steps=5 format=3 uid="uid://dt4pktbu7pd8k"]
 
 [ext_resource type="Script" path="res://player/player.gd" id="1_prbh2"]
 
@@ -13,11 +13,6 @@ colors = PackedColorArray(1, 1, 1, 1, 1, 1, 1, 1)
 gradient = SubResource("Gradient_uygd8")
 fill_to = Vector2(0, 0)
 
-[sub_resource type="SceneReplicationConfig" id="SceneReplicationConfig_nl672"]
-properties/0/path = NodePath(".:modulate")
-properties/0/spawn = true
-properties/0/replication_mode = 1
-
 [node name="Player" type="CharacterBody2D"]
 collision_mask = 0
 motion_mode = 1
@@ -28,10 +23,6 @@ shape = SubResource("CircleShape2D_yyrtc")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
 texture = SubResource("GradientTexture2D_qpln0")
-
-[node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="."]
-unique_name_in_owner = true
-replication_config = SubResource("SceneReplicationConfig_nl672")
 
 [node name="Camera2D" type="Camera2D" parent="."]
 unique_name_in_owner = true

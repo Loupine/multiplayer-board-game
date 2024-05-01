@@ -157,7 +157,6 @@ func _reconnect_player(old_id: int, new_id: int, _info: Dictionary)->void:
 			print("player body found")
 			player_body = child # Set the current player node for future reference
 			player_body.name = str(new_id)
-			player_body.find_child("MultiplayerSynchronizer").set_multiplayer_authority(new_id)
 			print("telling client to load game")
 			load_game.rpc_id(new_id, "res://game/game.tscn")
 			break

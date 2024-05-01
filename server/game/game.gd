@@ -21,7 +21,9 @@ func _ready():
 
 func _process(_delta):
 	if turn_order.size() > 0:
-		_request_player_position.rpc_id(turn_order[current_turn_index])
+		var current_player_id = turn_order[current_turn_index]
+		if Lobby.players.keys().has(current_player_id):
+			_request_player_position.rpc_id(turn_order[current_turn_index])
 
 
 @rpc("authority", "call_remote", "reliable")

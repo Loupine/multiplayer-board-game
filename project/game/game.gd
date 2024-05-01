@@ -16,7 +16,6 @@ func restore_player_functionality(old_id: int, new_id: int)->void:
 		if child.name == str(old_id):
 			print("renamed old player body id to new id")
 			child.set_name(str(new_id))
-			child.find_child("MultiplayerSynchronizer").set_multiplayer_authority(new_id)
 			break
 
 
@@ -28,7 +27,6 @@ func _send_reconnect_data(player_data: Dictionary)->void:
 		var player_body = _create_player(id)
 		%Players.add_child(player_body)
 		player_body.position = player_data.get(id)["position"]
-		player_body.find_child("MultiplayerSynchronizer").set_multiplayer_authority(id)
 	print("Added players in players info")
 
 
@@ -61,7 +59,6 @@ func _start_player_turn(player_id: int)->void:
 			print("Their name: " + Lobby.player_info["name"])
 		else:
 			print("Their name: " + Lobby.players.get(child_name.to_int())["name"])
-		print("Their id: " + str(child.find_child("MultiplayerSynchronizer").get_multiplayer_authority()))
 	_set_player_camera(player_id) # Show the player's camera to all clients
 	if multiplayer.get_unique_id() == player_id: 
 		_start_turn()

@@ -34,6 +34,10 @@ func _request_player_position()->void:
 @rpc("any_peer", "call_remote", "reliable")
 func _receive_player_position(_player_id, player_position: Vector2)->void:
 	var sender_id = multiplayer.get_remote_sender_id()
+	var player_body = %Players.get_node_or_null(str(sender_id))
+	if player_body != null:
+		player_body.position = player_position
+
 	for id in Lobby.players:
 		if id == sender_id:
 			pass
@@ -70,8 +74,6 @@ func update_turn_order_ids(old_id: int, new_id: int)->void:
 
 
 func handle_reconnection(id: int)->void:
-	print("sending reconnect data")
-	print(Lobby.players)
 	var player_data :Dictionary= {}
 	for child in %Players.get_children():
 		var player_name = child.name.to_int()
@@ -79,6 +81,8 @@ func handle_reconnection(id: int)->void:
 			"position" : child.position
 		}
 	_send_reconnect_data.rpc_id(id, player_data)
+	if turn_order[current_turn_index] == id:
+		_start_player_turn.rpc(id)
 
 
 @rpc("authority", "call_remote", "reliable")

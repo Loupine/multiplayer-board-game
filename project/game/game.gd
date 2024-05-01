@@ -38,7 +38,8 @@ func _create_player(player_id: int)->CharacterBody2D:
 
 @rpc("authority", "call_remote", "reliable")
 func _request_player_position()->void:
-	_receive_player_position.rpc_id(1, 0, current_player_node.position)
+	if current_player_node != null:
+		_receive_player_position.rpc_id(1, 0, current_player_node.position)
 
 
 @rpc("any_peer", "call_remote", "reliable")

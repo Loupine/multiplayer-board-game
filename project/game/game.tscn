@@ -158,11 +158,5 @@ position = Vector2(-1, 1)
 scale = Vector2(0.355469, 90.5)
 texture = SubResource("GradientTexture1D_u24hq")
 
-[node name="PlayerSpawner" type="MultiplayerSpawner" parent="."]
-unique_name_in_owner = true
-spawn_path = NodePath("../Players")
-
 [node name="Players" type="Node2D" parent="."]
 unique_name_in_owner = true
-
-[connection signal="spawned" from="PlayerSpawner" to="." method="_on_player_spawner_spawned"]

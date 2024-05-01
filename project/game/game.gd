@@ -8,26 +8,24 @@ var round_number := 1
 
 func _ready():
 	Lobby.player_loaded.rpc_id(1)
-	%PlayerSpawner.add_spawnable_scene("res://player/player.tscn")
 
 
+# Called on clients when a player is reconnecting. Ensures the old player id is
+# replaced with the new and that the player can control their body again.
 func restore_player_functionality(old_id: int, new_id: int)->void:
 	for child in %Players.get_children():
 		if child.name == str(old_id):
-			print("renamed old player body id to new id")
 			child.set_name(str(new_id))
 			break
 
 
-@rpc("authority", "call_remote", "reliable")
-func _send_reconnect_data(player_data: Dictionary)->void:
-	print("reconnect data sent")
-	print(player_data)
-	for id in player_data:
-		var player_body = _create_player(id)
+# Called by the server to signal clients to spawn player bodies.
+@rpc("authority", "call_local", "reliable")
+func _spawn_players(players_dictionary: Dictionary)->void:
+	for id in players_dictionary:
+		var player_body := _create_player(id)
+		player_body.position = %BoardPositions/Pos1.position
 		%Players.add_child(player_body)
-		player_body.position = player_data.get(id)["position"]
-	print("Added players in players info")
 
 
 func _create_player(player_id: int)->CharacterBody2D:
@@ -36,12 +34,14 @@ func _create_player(player_id: int)->CharacterBody2D:
 	return player_body
 
 
+# Server requests positional data from clients when it's their turn.
 @rpc("authority", "call_remote", "reliable")
 func _request_player_position()->void:
 	if current_player_node != null:
 		_receive_player_position.rpc_id(1, 0, current_player_node.position)
 
 
+# Update player positions with information from the server
 @rpc("any_peer", "call_remote", "reliable")
 func _receive_player_position(player_id, player_position: Vector2)->void:
 	if current_player_node == null:
@@ -50,19 +50,22 @@ func _receive_player_position(player_id, player_position: Vector2)->void:
 		current_player_node.position = player_position
 
 
+# Reconnecting client receives positional data from the server and reconstructs
+# the other players' nodes
+@rpc("authority", "call_remote", "reliable")
+func _send_reconnect_data(player_data: Dictionary)->void:
+	for id in player_data:
+		var player_body = _create_player(id)
+		%Players.add_child(player_body)
+		player_body.position = player_data.get(id)["position"]
+
+
 # The server starts the next player's turn and notifies all clients whose turn it is
 @rpc("authority", "call_remote", "reliable")
 func _start_player_turn(player_id: int)->void:
-	for child in %Players.get_children():
-		print("My name: " + Lobby.player_info["name"])
-		var child_name = child.name
-		if child_name.to_int() == multiplayer.get_unique_id():
-			print("Their name: " + Lobby.player_info["name"])
-		else:
-			print("Their name: " + Lobby.players.get(child_name.to_int())["name"])
 	_set_player_camera(player_id) # Show the player's camera to all clients
 	if multiplayer.get_unique_id() == player_id: 
-		_start_turn()
+		current_player_node.call("show_controls")
 	else:
 		print("%s's turn started." % Lobby.players.get(player_id)["name"])
 
@@ -75,16 +78,6 @@ func _set_player_camera(player_id: int)->void:
 			current_player_node = child # Set the current player node for future reference
 			child.call("set_player_camera")
 			break
-
-
-# Only called on the player whose turn it is
-func _start_turn():
-	print("Turn started")
-	_show_player_controls()
-
-
-func _show_player_controls()->void:
-	current_player_node.call("show_controls")
 
 
 # This notifies the server to start the next player's turn when the current turn finishes. 
@@ -157,8 +150,3 @@ func _round_finished()->void:
 @rpc("authority", "call_local", "reliable")
 func _game_finished()->void:
 	pass
-
-
-func _on_player_spawner_spawned(node: CharacterBody2D)->void:
-	var spawned_player := node
-	spawned_player.position = %BoardPositions.get_child(0).position

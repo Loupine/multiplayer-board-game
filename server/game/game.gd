@@ -13,24 +13,78 @@ var round_number := 1
 
 
 func _ready():
-	%PlayerSpawner.add_spawnable_scene("res://player/player.tscn")
 	connect("round_finished", _on_round_finished)
 	connect("game_finished", _on_game_finished)
 	randomize()
 
 
 func _process(_delta):
+	# Ensure game setup has been finished before requesting player data
 	if turn_order.size() > 0:
 		var current_player_id = turn_order[current_turn_index]
+		# Ensure player has not disconnected. This pass and the rpc could fail if 
+		# a client disconnects on the frame after this is called. This error is
+		# normal
 		if Lobby.players.keys().has(current_player_id):
 			_request_player_position.rpc_id(turn_order[current_turn_index])
 
 
+# Called exclusively on the server to determine player order and start the game
+func start_game()->void:
+	Lobby.game_started = true
+	_spawn_players.rpc(Lobby.players)
+	_determine_player_turn_order()
+	_start_player_turn.rpc(turn_order[current_turn_index])
+
+
+# Called by the server to signal clients to spawn player bodies.
+@rpc("authority", "call_local", "reliable")
+func _spawn_players(players_dictionary: Dictionary)->void:
+	for id in players_dictionary:
+		var player_body := _create_player(id)
+		%Players.add_child(player_body)
+
+
+func _create_player(player_id: int)->CharacterBody2D:
+	var player_body := preload("res://player/player.tscn").instantiate()
+	player_body.name = str(player_id)
+	return player_body
+
+
+func _determine_player_turn_order():
+	for player in Lobby.players:
+		turn_order.append(player)
+	turn_order.shuffle()
+
+
+# Used if a player is reconnecting to the server and their old id needs to be updated
+func update_turn_order_ids(old_id: int, new_id: int)->void:
+	var player_index := turn_order.find(old_id)
+	turn_order[player_index] = new_id
+
+
+# Called in lobby.gd player_loaded() func only if the game has started and a player
+# has begun the reconnection process
+func handle_reconnection(id: int)->void:
+	var player_data :Dictionary= {}
+	for child in %Players.get_children():
+		var player_name = child.name.to_int()
+		player_data[player_name] = {
+			"position" : child.position
+		}
+	_send_reconnect_data.rpc_id(id, player_data) # Sends all other clients' data to the reconnecting player
+	if turn_order[current_turn_index] == id: # If it's the reconnecting player's turn, start their turn again
+		_start_player_turn.rpc(id)
+
+
+# Server requests positional data from clients when it's their turn.
 @rpc("authority", "call_remote", "reliable")
 func _request_player_position()->void:
 	pass
 
 
+# When the client returns their positional data, update the server and other clients'
+# with that data
 @rpc("any_peer", "call_remote", "reliable")
 func _receive_player_position(_player_id, player_position: Vector2)->void:
 	var sender_id = multiplayer.get_remote_sender_id()
@@ -45,46 +99,8 @@ func _receive_player_position(_player_id, player_position: Vector2)->void:
 			_receive_player_position.rpc_id(id, sender_id, player_position)
 
 
-# Called exclusively on the server to determine player order and start the game
-func start_game()->void:
-	Lobby.game_started = true
-	spawn_players()
-	_determine_player_turn_order()
-	_start_player_turn.rpc(turn_order[current_turn_index])
-
-
-# Player spawning is synced via the PlayerSpawner node in the game scene.
-# Adding players directly to the Players node automatically spawns them on any
-# connected clients.
-func spawn_players()->void:
-	for player in Lobby.players:
-		var player_body := create_player(player)
-		%Players.add_child(player_body)
-
-
-func create_player(player_id: int)->CharacterBody2D:
-	var player_body := preload("res://player/player.tscn").instantiate()
-	player_body.name = str(player_id)
-	return player_body
-
-
-func update_turn_order_ids(old_id: int, new_id: int)->void:
-	var player_index := turn_order.find(old_id)
-	turn_order[player_index] = new_id
-
-
-func handle_reconnection(id: int)->void:
-	var player_data :Dictionary= {}
-	for child in %Players.get_children():
-		var player_name = child.name.to_int()
-		player_data[player_name] = {
-			"position" : child.position
-		}
-	_send_reconnect_data.rpc_id(id, player_data)
-	if turn_order[current_turn_index] == id:
-		_start_player_turn.rpc(id)
-
-
+# Server sends data to reconnecting clients with necessary data to correct their
+# game board
 @rpc("authority", "call_remote", "reliable")
 func _send_reconnect_data(_player_data: Dictionary)->void:
 	pass
@@ -116,7 +132,7 @@ func turn_finished()->void:
 		turn_finsihed.emit()
 		if current_turn_index == 0:
 			round_finished.emit()
-		
+
 		_start_player_turn.rpc(turn_order[current_turn_index]) # Start the next player's turn
 
 
@@ -136,9 +152,9 @@ func action_started(action_name: String)->void:
 		print("It is not this player's turn.")
 
 
-# Server processes actions requested by players and tells all clients what action
-# was requested, which player requested it, and any data necessary to complete the
-# action. Called in the above action_started method
+# Server processes player actions and tells all clients what action was requested, 
+# which player requested it, and any data necessary to complete the action. Called 
+# in the above action_started method
 @rpc("authority", "call_remote", "reliable")
 func _action_processed(_action_name: String, _action_result: Variant, _player_id: int)->void:
 	pass
@@ -151,7 +167,6 @@ func _round_finished()->void:
 		game_finished.emit()
 	round_number += 1
 	print("Round %d started" % round_number)
-	
 
 
 # The server determines when the game finishes and rpc's the clients.
@@ -161,12 +176,6 @@ func _game_finished()->void:
 	# on the clients when a game ends. This custom logic should replace the pass
 	# line on clients and the below rpc call should be moved elsewhere
 	Lobby.load_lobby.rpc("res://main_menu.tscn")
-
-
-func _determine_player_turn_order():
-	for player in Lobby.players:
-		turn_order.append(player)
-	turn_order.shuffle()
 
 
 func _on_round_finished()->void:

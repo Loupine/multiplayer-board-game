@@ -62,6 +62,11 @@ func player_loaded()->void:
 	if players_loaded == players.size():
 		$/root/Game.start_game()
 		players_loaded = 0
+	# Handle the case where a player is reconnecting and has loaded the game
+	if game_started and players_loaded == 1:
+		print("Reconnecting player loaded the game")
+		$/root/Game.handle_reconnection(multiplayer.get_remote_sender_id())
+		players_loaded = 0
 
 
 # When server receives new player info from a client, send that info to all other players
@@ -72,6 +77,7 @@ func _server_receive_player_info(new_player_info: Dictionary)->void:
 		pass
 	else:
 		if game_started:
+			print("checking disconnected players")
 			if !disconnected_players.is_empty():
 				# Try reconnection only if game is started and there are disconnected players
 				print("Trying player reconnect")
@@ -84,6 +90,7 @@ func _server_receive_player_info(new_player_info: Dictionary)->void:
 			multiplayer.multiplayer_peer.disconnect_peer(sender_id, true)
 		else:
 			# If game is not started and the lobby is not full, allow the connection
+			print("allowing the connection, not reconnecting")
 			print("%s has connected!" % new_player_info["name"])
 			_send_new_player_info_to_players(sender_id, new_player_info)
 			players[sender_id] = new_player_info
@@ -119,6 +126,7 @@ func _try_player_reconnect(id: int, info: Dictionary)->void:
 			info["board_position"] = disconnected_player_info["board_position"]
 			_reconnect_clients(player, id, info)
 			players[id] = info
+			$/root/Game.update_turn_order_ids(player, id)
 			disconnected_players.erase(player)
 			player_reconnected = true
 			print("%s successfully reconnected" % info["name"])
@@ -143,9 +151,16 @@ func _reconnect_clients(old_id: int, new_id: int, info: Dictionary)->void:
 # Client method that handles player reconnection
 @rpc("authority", "call_remote", "reliable")
 func _reconnect_player(old_id: int, new_id: int, _info: Dictionary)->void:
-	var player_body = $/root/Game.find_child("players").find_child(str(old_id))
-	player_body.name = str(new_id)
-	player_body.set_multiplayer_authority(new_id)
+	var player_body = $/root/Game.find_child("Players").find_child(str(old_id))
+	for child in $/root/Game.find_child("Players").get_children():
+		if child.name == str(old_id):
+			print("player body found")
+			player_body = child # Set the current player node for future reference
+			player_body.name = str(new_id)
+			player_body.find_child("MultiplayerSynchronizer").set_multiplayer_authority(new_id)
+			print("telling client to load game")
+			load_game.rpc_id(new_id, "res://game/game.tscn")
+			break
 
 
 # Client method that adds new players with info sent from server

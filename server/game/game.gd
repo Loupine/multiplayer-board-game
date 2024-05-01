@@ -5,12 +5,11 @@ signal turn_finsihed()
 signal round_finished()
 signal game_finished()
 
-const MAX_ROUNDS := 1 # How many times will each player have a turn
+const MAX_ROUNDS := 3 # How many times will each player have a turn
 
 var turn_order :Array= []
 var current_turn_index := 0
 var round_number := 1
-var players :Dictionary= Lobby.players
 
 
 func _ready():
@@ -20,11 +19,31 @@ func _ready():
 	randomize()
 
 
+func _process(_delta):
+	if turn_order.size() > 0:
+		_request_player_position.rpc_id(turn_order[current_turn_index])
+
+
+@rpc("authority", "call_remote", "reliable")
+func _request_player_position()->void:
+	pass
+
+
+@rpc("any_peer", "call_remote", "reliable")
+func _receive_player_position(_player_id, player_position: Vector2)->void:
+	var sender_id = multiplayer.get_remote_sender_id()
+	for id in Lobby.players:
+		if id == sender_id:
+			pass
+		else:
+			_receive_player_position.rpc_id(id, sender_id, player_position)
+
+
 # Called exclusively on the server to determine player order and start the game
 func start_game()->void:
+	Lobby.game_started = true
 	spawn_players()
 	_determine_player_turn_order()
-	_send_turn_order.rpc(turn_order)
 	_start_player_turn.rpc(turn_order[current_turn_index])
 
 
@@ -32,7 +51,7 @@ func start_game()->void:
 # Adding players directly to the Players node automatically spawns them on any
 # connected clients.
 func spawn_players()->void:
-	for player in players:
+	for player in Lobby.players:
 		var player_body := create_player(player)
 		%Players.add_child(player_body)
 
@@ -43,9 +62,25 @@ func create_player(player_id: int)->CharacterBody2D:
 	return player_body
 
 
-# The server sends the randomized turn order to clients
+func update_turn_order_ids(old_id: int, new_id: int)->void:
+	var player_index := turn_order.find(old_id)
+	turn_order[player_index] = new_id
+
+
+func handle_reconnection(id: int)->void:
+	print("sending reconnect data")
+	print(Lobby.players)
+	var player_data :Dictionary= {}
+	for child in %Players.get_children():
+		var player_name = child.name.to_int()
+		player_data[player_name] = {
+			"position" : child.position
+		}
+	_send_reconnect_data.rpc_id(id, player_data)
+
+
 @rpc("authority", "call_remote", "reliable")
-func _send_turn_order(_order: Array)->void:
+func _send_reconnect_data(_player_data: Dictionary)->void:
 	pass
 
 
@@ -123,7 +158,7 @@ func _game_finished()->void:
 
 
 func _determine_player_turn_order():
-	for player in players:
+	for player in Lobby.players:
 		turn_order.append(player)
 	turn_order.shuffle()
 

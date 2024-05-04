@@ -34,37 +34,27 @@ func _create_player(player_id: int)->CharacterBody2D:
 	return player_body
 
 
-# Server requests positional data from clients when it's their turn.
-@rpc("authority", "call_remote", "reliable")
-func _request_player_position()->void:
-	if current_player_node != null:
-		_receive_player_position.rpc_id(1, 0, current_player_node.position)
-
-
-# Update player positions with information from the server
-@rpc("any_peer", "call_remote", "reliable")
-func _receive_player_position(player_id, player_position: Vector2)->void:
-	if current_player_node == null:
-		pass
-	elif current_player_node.name == str(player_id):
-		current_player_node.position = player_position
-
-
 # Reconnecting client receives positional data from the server and reconstructs
-# the other players' nodes
+# the other players' nodes and updates the active player body if it's their turn.
 @rpc("authority", "call_remote", "reliable")
-func _send_reconnect_data(player_data: Dictionary)->void:
+func _send_reconnect_data(player_data: Dictionary, player_turn_id: int)->void:
 	for id in player_data:
 		var player_body = _create_player(id)
 		%Players.add_child(player_body)
-		player_body.position = player_data.get(id)["position"]
+		var board_position_index = player_data.get(id)["board_position"]
+		player_body.position = %BoardPositions.get_child(board_position_index).position
+
+		if id == multiplayer.get_unique_id():
+			Lobby.player_info["board_position"] = board_position_index
+		if id == player_turn_id:
+			current_player_node = player_body
 
 
 # The server starts the next player's turn and notifies all clients whose turn it is
 @rpc("authority", "call_remote", "reliable")
 func _start_player_turn(player_id: int)->void:
 	_set_player_camera(player_id) # Show the player's camera to all clients
-	if multiplayer.get_unique_id() == player_id: 
+	if multiplayer.get_unique_id() == player_id:
 		current_player_node.call("show_controls")
 	else:
 		print("%s's turn started." % Lobby.players.get(player_id)["name"])
@@ -104,24 +94,18 @@ func _action_processed(action_name: String, action_result: Variant, player_id: i
 		"ROLL":
 			var roll :int= action_result
 			if multiplayer.get_unique_id() == player_id: # If this client is the player, do the action
-				for i in range(roll):
-					# Wait for each loop iteration to finish so the player visits 
-					# every board position. If await is removed, the player will
-					# skip to the final position
-					await _move_player_to_next_board_position(player_id)
+				await _move_player_to_next_board_position(player_id, roll)
 				current_player_node.call("on_finished_moving")
 			else:
-				var current_position :int= Lobby.players.get(player_id)["board_position"]
-				Lobby.players.get(player_id)["board_position"] = (
-										(current_position + roll)  % TOTAL_BOARD_POSITIONS)
+				await _move_player_to_next_board_position(player_id, roll)
 
 
-func _move_player_to_next_board_position(player_id: int)->void:
-	if multiplayer.get_unique_id() == player_id:
-		var next_position := _calc_next_board_position()
+func _move_player_to_next_board_position(player_id: int, roll: int)->void:
+	for i in range(roll):
+		var next_position := _calc_next_board_position(player_id)
 		var tween := current_player_node.create_tween()
 		# Gradually move to the next position with a property tweener over 2.5 seconds.
-		tween.tween_property(current_player_node, "position", 
+		tween.tween_property(current_player_node, "position",
 								next_position, 1.0)
 		# Wait for a timer signal to ensure processing is stopped until the next 
 		# position is reached. If await is removed here or in the 'ROLL' action, 
@@ -129,10 +113,17 @@ func _move_player_to_next_board_position(player_id: int)->void:
 		await get_tree().create_timer(1.0).timeout
 
 
-func _calc_next_board_position()->Vector2:
-	var board_position_index :int= Lobby.player_info["board_position"]
-	var next_position_index := (board_position_index + 1) % TOTAL_BOARD_POSITIONS
-	Lobby.player_info["board_position"] = next_position_index
+func _calc_next_board_position(player_id: int)->Vector2:
+	var board_position_index: int
+	var next_position_index: int
+	if player_id == multiplayer.get_unique_id():
+		board_position_index = Lobby.player_info["board_position"]
+		next_position_index = (board_position_index + 1) % TOTAL_BOARD_POSITIONS
+		Lobby.player_info["board_position"] = next_position_index
+	else:
+		board_position_index = Lobby.players.get(player_id)["board_position"]
+		next_position_index = (board_position_index + 1) % TOTAL_BOARD_POSITIONS
+		Lobby.players.get(player_id)["board_position"] = next_position_index
 	return %BoardPositions.get_child(next_position_index).position
 
 

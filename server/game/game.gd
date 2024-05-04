@@ -18,17 +18,6 @@ func _ready():
 	randomize()
 
 
-func _process(_delta):
-	# Ensure game setup has been finished before requesting player data
-	if turn_order.size() > 0:
-		var current_player_id = turn_order[current_turn_index]
-		# Ensure player has not disconnected. This pass and the rpc could fail if 
-		# a client disconnects on the frame after this is called. This error is
-		# normal
-		if Lobby.players.keys().has(current_player_id):
-			_request_player_position.rpc_id(turn_order[current_turn_index])
-
-
 # Called exclusively on the server to determine player order and start the game
 func start_game()->void:
 	Lobby.game_started = true
@@ -66,43 +55,16 @@ func update_turn_order_ids(old_id: int, new_id: int)->void:
 # Called in lobby.gd player_loaded() func only if the game has started and a player
 # has begun the reconnection process
 func handle_reconnection(id: int)->void:
-	var player_data :Dictionary= {}
-	for child in %Players.get_children():
-		var player_name = child.name.to_int()
-		player_data[player_name] = {
-			"position" : child.position
-		}
-	_send_reconnect_data.rpc_id(id, player_data) # Sends all other clients' data to the reconnecting player
+	var player_data :Dictionary= Lobby.players
+	_send_reconnect_data.rpc_id(id, player_data, turn_order[current_turn_index]) # Sends all other clients' data to the reconnecting player
 	if turn_order[current_turn_index] == id: # If it's the reconnecting player's turn, start their turn again
 		_start_player_turn.rpc(id)
-
-
-# Server requests positional data from clients when it's their turn.
-@rpc("authority", "call_remote", "reliable")
-func _request_player_position()->void:
-	pass
-
-
-# When the client returns their positional data, update the server and other clients'
-# with that data
-@rpc("any_peer", "call_remote", "reliable")
-func _receive_player_position(_player_id, player_position: Vector2)->void:
-	var sender_id = multiplayer.get_remote_sender_id()
-	var player_body = %Players.get_node_or_null(str(sender_id))
-	if player_body != null:
-		player_body.position = player_position
-
-	for id in Lobby.players:
-		if id == sender_id:
-			pass
-		else:
-			_receive_player_position.rpc_id(id, sender_id, player_position)
 
 
 # Server sends data to reconnecting clients with necessary data to correct their
 # game board
 @rpc("authority", "call_remote", "reliable")
-func _send_reconnect_data(_player_data: Dictionary)->void:
+func _send_reconnect_data(_player_data: Dictionary, _player_turn_id)->void:
 	pass
 
 
@@ -148,8 +110,15 @@ func action_started(action_name: String)->void:
 				# Determine a number of spaces for the player to move
 				var random_roll := randi_range(1, 6)
 				_action_processed.rpc(action_name, random_roll, player_id)
+				_update_player_board_position(player_id, random_roll)
 	else:
 		print("It is not this player's turn.")
+
+
+func _update_player_board_position(player_id: int, roll: int)->void:
+	var board_position_index = Lobby.players.get(player_id)["board_position"]
+	var next_position_index = (board_position_index + roll) % %BoardPositions.get_children().size()
+	Lobby.players.get(player_id)["board_position"] = next_position_index
 
 
 # Server processes player actions and tells all clients what action was requested, 

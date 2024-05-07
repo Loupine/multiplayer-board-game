@@ -104,7 +104,6 @@ func turn_finished()->void:
 # an action, the server will only process the action if it is that player's turn
 @rpc("any_peer", "call_remote", "reliable")
 func action_started(action_name: String)->void:
-	print("action started")
 	var player_id := multiplayer.get_remote_sender_id()
 	if player_id == turn_order[current_turn_index]:
 		match action_name:

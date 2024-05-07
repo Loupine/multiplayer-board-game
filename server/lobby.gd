@@ -9,11 +9,9 @@ signal player_disconnected(peer_id)
 const PORT := 1077
 const MAX_CONNECTIONS := 3
 
-# This will contain player info for every player,
-# with the keys being each player's unique IDs.
-var players :Dictionary= {}
-var disconnected_players :Dictionary= {}
-var players_ready := []
+var players :Dictionary= {} # Contains connected player information.
+var disconnected_players :Dictionary= {} # Player info goes here when they disconnect
+var players_ready := [] # Contains player ids for those that are ready
 var players_loaded := 0
 var game_started := false
 
@@ -79,8 +77,7 @@ func _server_receive_player_info(new_player_info: Dictionary)->void:
 		if game_started:
 			print("checking disconnected players")
 			if !disconnected_players.is_empty():
-				# Try reconnection only if game is started and there are disconnected players
-				print("Trying player reconnect")
+				# Try reconnection if game is started and there are disconnected players
 				_try_player_reconnect(sender_id, new_player_info)
 			else:
 				print("Game started and no players are disconnected")
@@ -90,7 +87,6 @@ func _server_receive_player_info(new_player_info: Dictionary)->void:
 			multiplayer.multiplayer_peer.disconnect_peer(sender_id, true)
 		else:
 			# If game is not started and the lobby is not full, allow the connection
-			print("allowing the connection, not reconnecting")
 			print("%s has connected!" % new_player_info["name"])
 			_send_new_player_info_to_players(sender_id, new_player_info)
 			players[sender_id] = new_player_info
@@ -110,6 +106,7 @@ func _send_new_player_info_to_players(new_player_id: int, info: Dictionary)->voi
 
 
 func _try_player_reconnect(id: int, info: Dictionary)->void:
+	print("Trying player reconnect")
 	var player_reconnected := false
 	# Make sure the player isn't already connected!
 	for player in players:
@@ -148,13 +145,12 @@ func _reconnect_clients(old_id: int, new_id: int, info: Dictionary)->void:
 	_reconnect_player(old_id, new_id, info)
 
 
-# Client method that handles player reconnection
+# Method that handles player reconnection, also called from the server on clients
 @rpc("authority", "call_remote", "reliable")
 func _reconnect_player(old_id: int, new_id: int, _info: Dictionary)->void:
 	var player_body = $/root/Game.find_child("Players").find_child(str(old_id))
 	for child in $/root/Game.find_child("Players").get_children():
 		if child.name == str(old_id):
-			print("player body found")
 			player_body = child # Set the current player node for future reference
 			player_body.name = str(new_id)
 			print("telling client to load game")
@@ -177,11 +173,14 @@ func _notify_full_lobby()->void:
 # Clients notify the server when they toggle the ready box. When all players are
 # ready the game will start.
 @rpc("any_peer", "call_remote", "reliable")
-func notify_player_ready()->void:
-	if not players_ready.has(multiplayer.get_remote_sender_id()):
-		players_ready.append(multiplayer.get_remote_sender_id())
+func notify_player_ready_status()->void:
+	var sender_id := multiplayer.get_remote_sender_id()
+	if not players_ready.has(sender_id):
+		players_ready.append(sender_id)
 		if players_ready.size() == MAX_CONNECTIONS:
 			load_game.rpc("res://game/game.tscn")
+	else:
+		players_ready.erase(sender_id)
 
 
 func _reset_server()->void:

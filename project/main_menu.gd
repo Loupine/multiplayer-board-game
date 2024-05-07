@@ -54,6 +54,5 @@ func _on_connect_button_pressed()->void:
 		pass
 
 
-func _on_ready_checkbox_toggled(toggled_on):
-	if toggled_on:
-		Lobby.notify_player_ready.rpc_id(1)
+func _on_ready_checkbox_toggled(_toggled_on):
+	Lobby.notify_player_ready_status.rpc_id(1)

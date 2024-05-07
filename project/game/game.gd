@@ -52,10 +52,10 @@ func _send_reconnect_data(player_data: Dictionary, player_turn_id: int)->void:
 
 # The server starts the next player's turn and notifies all clients whose turn it is
 @rpc("authority", "call_remote", "reliable")
-func _start_player_turn(player_id: int)->void:
+func _start_player_turn(player_id: int, actions_taken: Array)->void:
 	_set_player_camera(player_id) # Show the player's camera to all clients
 	if multiplayer.get_unique_id() == player_id:
-		current_player_node.call("show_controls")
+		current_player_node.call("show_controls", actions_taken)
 	else:
 		print("%s's turn started." % Lobby.players.get(player_id)["name"])
 

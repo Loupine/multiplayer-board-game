@@ -8,6 +8,7 @@ signal game_finished()
 const MAX_ROUNDS := 3 # How many times will each player have a turn
 
 var turn_order :Array= []
+var turn_actions_taken :Array= []
 var current_turn_index := 0
 var round_number := 1
 
@@ -23,7 +24,7 @@ func start_game()->void:
 	Lobby.game_started = true
 	_spawn_players.rpc(Lobby.players)
 	_determine_player_turn_order()
-	_start_player_turn.rpc(turn_order[current_turn_index])
+	_start_player_turn.rpc(turn_order[current_turn_index], turn_actions_taken)
 
 
 # Called by the server to signal clients to spawn player bodies.
@@ -58,7 +59,7 @@ func handle_reconnection(id: int)->void:
 	var player_data :Dictionary= Lobby.players
 	_send_reconnect_data.rpc_id(id, player_data, turn_order[current_turn_index]) # Sends all other clients' data to the reconnecting player
 	if turn_order[current_turn_index] == id: # If it's the reconnecting player's turn, start their turn again
-		_start_player_turn.rpc(id)
+		_start_player_turn.rpc(id, turn_actions_taken)
 
 
 # Server sends data to reconnecting clients with necessary data to correct their
@@ -70,7 +71,7 @@ func _send_reconnect_data(_player_data: Dictionary, _player_turn_id)->void:
 
 # The server starts the next player's turn and notifies all clients whose turn it is
 @rpc("authority", "call_local", "reliable")
-func _start_player_turn(player_id: int)->void:
+func _start_player_turn(player_id: int, _actions_taken: Array)->void:
 	# Set player camera on the server. Useful for developmental debugging.
 	# Should be removed for production ready builds.
 	_set_player_camera(player_id)
@@ -94,8 +95,8 @@ func turn_finished()->void:
 		turn_finsihed.emit()
 		if current_turn_index == 0:
 			round_finished.emit()
-
-		_start_player_turn.rpc(turn_order[current_turn_index]) # Start the next player's turn
+		turn_actions_taken.clear()
+		_start_player_turn.rpc(turn_order[current_turn_index], turn_actions_taken) # Start the next player's turn
 
 
 # Client should call this when they want to start an action. This tells the server
@@ -103,14 +104,17 @@ func turn_finished()->void:
 # an action, the server will only process the action if it is that player's turn
 @rpc("any_peer", "call_remote", "reliable")
 func action_started(action_name: String)->void:
+	print("action started")
 	var player_id := multiplayer.get_remote_sender_id()
 	if player_id == turn_order[current_turn_index]:
 		match action_name:
 			"ROLL":
-				# Determine a number of spaces for the player to move
-				var random_roll := randi_range(1, 6)
-				_action_processed.rpc(action_name, random_roll, player_id)
-				_update_player_board_position(player_id, random_roll)
+				if not turn_actions_taken.has(action_name):
+					# Determine a number of spaces for the player to move
+					var random_roll := randi_range(1, 6)
+					_action_processed.rpc(action_name, random_roll, player_id)
+					_update_player_board_position(player_id, random_roll)
+					turn_actions_taken.append(action_name)
 	else:
 		print("It is not this player's turn.")
 

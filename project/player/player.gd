@@ -7,10 +7,14 @@ func set_player_camera()->void:
 	%Camera2D.make_current()
 
 
-func show_controls()->void:
+func show_controls(actions_taken: Array)->void:
 	%Controls.show()
-	%RollForMovementButton.show()
-	%EndTurnButton.hide()
+	if actions_taken.has("ROLL"):
+		%RollForMovementButton.hide()
+		%EndTurnButton.show()
+	else:
+		%RollForMovementButton.show()
+		%EndTurnButton.hide()
 
 
 func on_finished_moving()->void:

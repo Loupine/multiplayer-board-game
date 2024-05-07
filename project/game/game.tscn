@@ -161,24 +161,23 @@ texture = SubResource("GradientTexture1D_u24hq")
 [node name="Players" type="Node2D" parent="."]
 unique_name_in_owner = true
 
-[node name="Camera2D" type="Camera2D" parent="."]
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+
+[node name="Camera2D" type="Camera2D" parent="CanvasLayer"]
 unique_name_in_owner = true
 top_level = true
 position = Vector2(640, 360)
-zoom = Vector2(1.675, 1.675)
+zoom = Vector2(1.66, 1.66)
 position_smoothing_enabled = true
 position_smoothing_speed = 15.0
 
-[node name="GameUI" type="Control" parent="Camera2D"]
-custom_minimum_size = Vector2(765, 50)
+[node name="GameUI" type="Control" parent="CanvasLayer"]
+custom_minimum_size = Vector2(1280, 50)
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -382.5
-offset_top = -215.365
-offset_right = 382.5
-offset_bottom = -165.365
+offset_bottom = -670.0
 grow_horizontal = 2
 grow_vertical = 2
 size_flags_horizontal = 3
@@ -186,7 +185,7 @@ size_flags_vertical = 3
 mouse_filter = 1
 metadata/_edit_lock_ = true
 
-[node name="HBoxContainer" type="HBoxContainer" parent="Camera2D/GameUI"]
+[node name="HBoxContainer" type="HBoxContainer" parent="CanvasLayer/GameUI"]
 layout_mode = 1
 anchors_preset = 5
 anchor_left = 0.5
@@ -198,38 +197,38 @@ grow_horizontal = 2
 theme_override_constants/separation = 15
 alignment = 1
 
-[node name="HBoxContainer" type="HBoxContainer" parent="Camera2D/GameUI/HBoxContainer"]
+[node name="HBoxContainer" type="HBoxContainer" parent="CanvasLayer/GameUI/HBoxContainer"]
 custom_minimum_size = Vector2(150, 0)
 layout_mode = 2
 
-[node name="LocalPlayerName" type="Label" parent="Camera2D/GameUI/HBoxContainer/HBoxContainer"]
+[node name="LocalPlayerName" type="Label" parent="CanvasLayer/GameUI/HBoxContainer/HBoxContainer"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "PlayerName"
 
-[node name="HBoxContainer2" type="HBoxContainer" parent="Camera2D/GameUI/HBoxContainer"]
+[node name="HBoxContainer2" type="HBoxContainer" parent="CanvasLayer/GameUI/HBoxContainer"]
 custom_minimum_size = Vector2(150, 0)
 layout_mode = 2
 
-[node name="CurrentPlayerName" type="Label" parent="Camera2D/GameUI/HBoxContainer/HBoxContainer2"]
+[node name="CurrentPlayerName" type="Label" parent="CanvasLayer/GameUI/HBoxContainer/HBoxContainer2"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "'s Turn"
 
-[node name="HBoxContainer3" type="HBoxContainer" parent="Camera2D/GameUI/HBoxContainer"]
+[node name="HBoxContainer3" type="HBoxContainer" parent="CanvasLayer/GameUI/HBoxContainer"]
 custom_minimum_size = Vector2(150, 0)
 layout_mode = 2
 
-[node name="TurnNumber" type="Label" parent="Camera2D/GameUI/HBoxContainer/HBoxContainer3"]
+[node name="TurnNumber" type="Label" parent="CanvasLayer/GameUI/HBoxContainer/HBoxContainer3"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "Turn: 0"
 
-[node name="HBoxContainer4" type="HBoxContainer" parent="Camera2D/GameUI/HBoxContainer"]
+[node name="HBoxContainer4" type="HBoxContainer" parent="CanvasLayer/GameUI/HBoxContainer"]
 custom_minimum_size = Vector2(150, 0)
 layout_mode = 2
 
-[node name="RoundNumber" type="Label" parent="Camera2D/GameUI/HBoxContainer/HBoxContainer4"]
+[node name="RoundNumber" type="Label" parent="CanvasLayer/GameUI/HBoxContainer/HBoxContainer4"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "Round: 1"

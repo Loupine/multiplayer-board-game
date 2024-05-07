@@ -1,6 +1,6 @@
 # Credits and Attribution
 
-This project is free for anyone to use without attribution. However if you would like to attribute me, please include a link to the repository.
+This project is free for anyone to use without attribution. However if you would like to attribute me, please include a link to the repository. Please note that Godot licensing requirements, (as mentioned below), still apply.
 
 **credits.txt** includes required licensing information as described on the official Godot documentation website, linked below.
 https://docs.godotengine.org/en/stable/about/complying_with_licenses.html.

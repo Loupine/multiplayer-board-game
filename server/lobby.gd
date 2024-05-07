@@ -6,7 +6,7 @@ extends Node
 signal player_connected_to_lobby()
 signal player_disconnected(peer_id)
 
-const PORT := 6029
+const PORT := 1077
 const MAX_CONNECTIONS := 3
 
 # This will contain player info for every player,

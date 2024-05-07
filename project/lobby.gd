@@ -8,7 +8,7 @@ signal player_disconnected(peer_id)
 signal server_disconnected
 signal menu_loaded
 
-const PORT := 6029
+const PORT := 1077
 const DEFAULT_SERVER_IP := "localhost" # IPv4 localhost
 
 # This will contain player info for every player,

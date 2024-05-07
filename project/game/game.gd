@@ -4,10 +4,12 @@ const TOTAL_BOARD_POSITIONS := 10
 
 var current_player_node :Node
 var round_number := 1
+var actions: Node
 
 
 func _ready():
 	Lobby.player_loaded.rpc_id(1)
+	actions = Actions.new(get_tree(), multiplayer.get_unique_id(), TOTAL_BOARD_POSITIONS, $BoardPositions)
 
 
 # Called on clients when a player is reconnecting. Ensures the old player id is
@@ -66,6 +68,7 @@ func _set_player_camera(player_id: int)->void:
 	for child in %Players.get_children():
 		if child.name == str(player_id):
 			current_player_node = child # Set the current player node for future reference
+			actions.update_current_player_node(current_player_node)
 			child.call("set_player_camera")
 			break
 
@@ -92,39 +95,7 @@ func action_started(_action_name: String)->void:
 func _action_processed(action_name: String, action_result: Variant, player_id: int)->void:
 	match action_name:
 		"ROLL":
-			var roll :int= action_result
-			if multiplayer.get_unique_id() == player_id: # If this client is the player, do the action
-				await _move_player_to_next_board_position(player_id, roll)
-				current_player_node.call("on_finished_moving")
-			else:
-				await _move_player_to_next_board_position(player_id, roll)
-
-
-func _move_player_to_next_board_position(player_id: int, roll: int)->void:
-	for i in range(roll):
-		var next_position := _calc_next_board_position(player_id)
-		var tween := current_player_node.create_tween()
-		# Gradually move to the next position with a property tweener over 2.5 seconds.
-		tween.tween_property(current_player_node, "position",
-								next_position, 1.0)
-		# Wait for a timer signal to ensure processing is stopped until the next 
-		# position is reached. If await is removed here or in the 'ROLL' action, 
-		# the players will skip to the final position w/o visiting the other ones.
-		await get_tree().create_timer(1.0).timeout
-
-
-func _calc_next_board_position(player_id: int)->Vector2:
-	var board_position_index: int
-	var next_position_index: int
-	if player_id == multiplayer.get_unique_id():
-		board_position_index = Lobby.player_info["board_position"]
-		next_position_index = (board_position_index + 1) % TOTAL_BOARD_POSITIONS
-		Lobby.player_info["board_position"] = next_position_index
-	else:
-		board_position_index = Lobby.players.get(player_id)["board_position"]
-		next_position_index = (board_position_index + 1) % TOTAL_BOARD_POSITIONS
-		Lobby.players.get(player_id)["board_position"] = next_position_index
-	return %BoardPositions.get_child(next_position_index).position
+			actions.move_player(action_result, player_id)
 
 
 # The server determines when the round finishes and rpc's the clients

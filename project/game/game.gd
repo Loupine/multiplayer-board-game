@@ -4,12 +4,14 @@ const TOTAL_BOARD_POSITIONS := 10
 
 var current_player_node
 var round_number := 1
+var turn_number := 0
 var actions: Node
 
 
 func _ready():
 	Lobby.player_loaded.rpc_id(1)
 	actions = Actions.new(get_tree(), multiplayer.get_unique_id(), TOTAL_BOARD_POSITIONS, $BoardPositions)
+	%LocalPlayerName.text = Lobby.player_info["name"]
 
 
 func _physics_process(_delta: float):
@@ -62,9 +64,14 @@ func _send_reconnect_data(player_data: Dictionary, player_turn_id: int)->void:
 func _start_player_turn(player_id: int, actions_taken: Array)->void:
 	_find_player_node(player_id)
 	if multiplayer.get_unique_id() == player_id:
+		turn_number += 1
+		%CurrentPlayerName.text = "%s's turn" % %LocalPlayerName.text
+		%TurnNumber.text = "Turn: " + str(turn_number)
 		current_player_node.call("show_controls", actions_taken)
 	else:
-		print("%s's turn started." % Lobby.players.get(player_id)["name"])
+		var player_name :String= Lobby.players.get(player_id)["name"]
+		%CurrentPlayerName.text = "%s's turn" % player_name
+		print("%s's turn started." % player_name)
 
 
 func _find_player_node(player_id: int)->void:
@@ -106,6 +113,7 @@ func _action_processed(action_name: String, action_result: Variant, player_id: i
 @rpc("authority", "call_local", "reliable")
 func _round_finished()->void:
 	round_number += 1
+	%RoundNumber.text = "Round: " + str(round_number)
 
 
 # The server determines when the game finishes and rpc's the clients. Currently

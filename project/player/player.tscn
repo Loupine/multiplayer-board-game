@@ -24,11 +24,7 @@ shape = SubResource("CircleShape2D_yyrtc")
 [node name="Sprite2D" type="Sprite2D" parent="."]
 texture = SubResource("GradientTexture2D_qpln0")
 
-[node name="Camera2D" type="Camera2D" parent="."]
-unique_name_in_owner = true
-zoom = Vector2(2, 2)
-
-[node name="Controls" type="Control" parent="Camera2D"]
+[node name="Controls" type="Control" parent="."]
 unique_name_in_owner = true
 visible = false
 layout_mode = 3
@@ -38,7 +34,7 @@ offset_top = -180.0
 offset_right = 320.0
 offset_bottom = 180.0
 
-[node name="VBoxContainer" type="VBoxContainer" parent="Camera2D/Controls"]
+[node name="VBoxContainer" type="VBoxContainer" parent="Controls"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -47,12 +43,12 @@ grow_horizontal = 2
 grow_vertical = 2
 alignment = 2
 
-[node name="HBoxContainer" type="HBoxContainer" parent="Camera2D/Controls/VBoxContainer"]
+[node name="HBoxContainer" type="HBoxContainer" parent="Controls/VBoxContainer"]
 custom_minimum_size = Vector2(0, 95.655)
 layout_mode = 2
 alignment = 1
 
-[node name="RollForMovementButton" type="Button" parent="Camera2D/Controls/VBoxContainer/HBoxContainer"]
+[node name="RollForMovementButton" type="Button" parent="Controls/VBoxContainer/HBoxContainer"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(163.77, 43.69)
 layout_mode = 2
@@ -60,7 +56,7 @@ size_flags_horizontal = 4
 size_flags_vertical = 4
 text = "Roll for Movement"
 
-[node name="EndTurnButton" type="Button" parent="Camera2D/Controls/VBoxContainer/HBoxContainer"]
+[node name="EndTurnButton" type="Button" parent="Controls/VBoxContainer/HBoxContainer"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(163.77, 43.69)
 layout_mode = 2
@@ -68,5 +64,5 @@ size_flags_horizontal = 4
 size_flags_vertical = 4
 text = "End Turn"
 
-[connection signal="pressed" from="Camera2D/Controls/VBoxContainer/HBoxContainer/RollForMovementButton" to="." method="_on_roll_for_movement_button_pressed"]
-[connection signal="pressed" from="Camera2D/Controls/VBoxContainer/HBoxContainer/EndTurnButton" to="." method="_on_end_turn_button_pressed"]
+[connection signal="pressed" from="Controls/VBoxContainer/HBoxContainer/RollForMovementButton" to="." method="_on_roll_for_movement_button_pressed"]
+[connection signal="pressed" from="Controls/VBoxContainer/HBoxContainer/EndTurnButton" to="." method="_on_end_turn_button_pressed"]

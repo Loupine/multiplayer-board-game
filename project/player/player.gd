@@ -3,10 +3,6 @@ extends CharacterBody2D
 signal rolled_for_movement
 
 
-func set_player_camera()->void:
-	%Camera2D.make_current()
-
-
 func show_controls(actions_taken: Array)->void:
 	%Controls.show()
 	if actions_taken.has("ROLL"):

@@ -2,7 +2,7 @@ extends Node2D
 
 const TOTAL_BOARD_POSITIONS := 10
 
-var current_player_node :Node
+var current_player_node
 var round_number := 1
 var actions: Node
 
@@ -10,6 +10,11 @@ var actions: Node
 func _ready():
 	Lobby.player_loaded.rpc_id(1)
 	actions = Actions.new(get_tree(), multiplayer.get_unique_id(), TOTAL_BOARD_POSITIONS, $BoardPositions)
+
+
+func _physics_process(_delta: float):
+	if current_player_node != null:
+		%Camera2D.position = current_player_node.position
 
 
 # Called on clients when a player is reconnecting. Ensures the old player id is
@@ -55,21 +60,20 @@ func _send_reconnect_data(player_data: Dictionary, player_turn_id: int)->void:
 # The server starts the next player's turn and notifies all clients whose turn it is
 @rpc("authority", "call_remote", "reliable")
 func _start_player_turn(player_id: int, actions_taken: Array)->void:
-	_set_player_camera(player_id) # Show the player's camera to all clients
+	_find_player_node(player_id)
 	if multiplayer.get_unique_id() == player_id:
 		current_player_node.call("show_controls", actions_taken)
 	else:
 		print("%s's turn started." % Lobby.players.get(player_id)["name"])
 
 
-func _set_player_camera(player_id: int)->void:
+func _find_player_node(player_id: int)->void:
 	# Doing %Players.find_child(str(player_id)) returns null so we loop through 
 	# all the players until we find one with a matching name
 	for child in %Players.get_children():
 		if child.name == str(player_id):
 			current_player_node = child # Set the current player node for future reference
 			actions.update_current_player_node(current_player_node)
-			child.call("set_player_camera")
 			break
 
 

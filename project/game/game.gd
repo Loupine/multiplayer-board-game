@@ -61,6 +61,8 @@ func _send_reconnect_data(player_data: Dictionary, player_turn_id: int)->void:
 		if id == player_turn_id:
 			# Update the active player node 
 			current_player_node = player_body
+			actions.update_current_player_node(current_player_node)
+			_update_gameui_turn_text(id, turn_number)
 
 
 # The server starts the next player's turn and notifies all clients whose turn it is
@@ -85,10 +87,9 @@ func _update_current_player_node(player_id: int)->void:
 			break
 
 
-# Updates GameUI to reflect the current turn's information. When called with
-# number < 0, it is not the local player's turn and the turn text will not be updated
+# Updates GameUI to reflect the current turn's information.
 func _update_gameui_turn_text(player_id: int, number: int)->void:
-	if number >= 0: 
+	if multiplayer.get_unique_id() == player_id: 
 		%TurnNumber.text = "Turn: " + str(number)
 		%CurrentPlayerName.text = "Your turn"
 	else:

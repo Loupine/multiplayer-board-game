@@ -33,14 +33,15 @@ func move_player(action_result: int, player_id: int)->void:
 func _move_player_to_next_board_position(player_id: int, roll: int)->void:
 	for i in range(roll):
 		var next_position := _calc_next_board_position(player_id)
-		var tween := _current_player_node.create_tween()
-		# Gradually move to the next position with a property tweener over 2.5 seconds.
-		tween.tween_property(_current_player_node, "position",
-								next_position, 1.0)
-		# Wait for a timer signal to ensure processing is stopped until the next 
-		# position is reached. If await is removed here or in the 'ROLL' action, 
-		# the players will skip to the final position w/o visiting the other ones.
-		await _scene_tree.create_timer(1.0).timeout
+		if _current_player_node != null:
+			var tween := _current_player_node.create_tween()
+			# Gradually move to the next position with a property tweener over 2.5 seconds.
+			tween.tween_property(_current_player_node, "position",
+									next_position, 1.0)
+			# Wait for a timer signal to ensure processing is stopped until the next 
+			# position is reached. If await is removed here or in the 'ROLL' action, 
+			# the players will skip to the final position w/o visiting the other ones.
+			await _scene_tree.create_timer(1.0).timeout
 
 
 func _calc_next_board_position(player_id: int)->Vector2:

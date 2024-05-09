@@ -83,7 +83,7 @@ func _server_receive_player_info(new_player_info: Dictionary)->void:
 				multiplayer.multiplayer_peer.disconnect_peer(sender_id)
 		elif multiplayer.get_peers().size() > MAX_CONNECTIONS:
 			# Disconnect new peer if game is not started and the server is full
-			multiplayer.multiplayer_peer.disconnect_peer(sender_id, true)
+			multiplayer.multiplayer_peer.disconnect_peer(sender_id)
 		else:
 			# Allow the connection if game is not started and the server is not full
 			_send_new_player_info_to_players(sender_id, new_player_info)

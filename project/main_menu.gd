@@ -32,12 +32,12 @@ func add_connected_player_name(_id: int, info: Dictionary)->void:
 
 
 func _remove_disconnected_player_name(id: int)->void:
-	var text_edit :TextEdit= %ConnectedPlayersTextEdit
-	var text :String= text_edit.text
-	print(Lobby.players.has(id))
-	var player_name = Lobby.players.get(id)["name"]
-	if text.find(player_name) != -1:
-		text_edit.text = text.replace(player_name + "\n", "")
+	if Lobby.players.has(id):
+		var text_edit :TextEdit= %ConnectedPlayersTextEdit
+		var text :String= text_edit.text
+		var player_name = Lobby.players.get(id)["name"]
+		if text.find(player_name) != -1:
+			text_edit.text = text.replace(player_name + "\n", "")
 
 
 func _on_name_text_changed()->void:

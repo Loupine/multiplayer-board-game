@@ -11,11 +11,13 @@ func try_player_reconnect(id: int, info: Dictionary)->void:
 			# Disconnect peer if a player with the same name already exists.
 			# Could potentially cause issues if two players joined a lobby with
 			# the same name and one has to reconnect during the game.
-			multiplayer.multiplayer_peer.disconnect_peer(id, true)
+			multiplayer.multiplayer_peer.disconnect_peer(id)
 			return
 
 	# Validate the player was disconnected and try reconnecting them
 	for player in Lobby.disconnected_players:
+		if Lobby.disconnected_players.get(player) == null:
+			break
 		var disconnected_player_info :Dictionary= Lobby.disconnected_players.get(player)
 		if disconnected_player_info["name"] == info["name"]:
 			info["board_position"] = disconnected_player_info["board_position"]
@@ -29,7 +31,7 @@ func try_player_reconnect(id: int, info: Dictionary)->void:
 
 	# If reconnect attempt fails, disconnect the peer
 	if !player_reconnected:
-		multiplayer.multiplayer_peer.disconnect_peer(id, true)
+		multiplayer.multiplayer_peer.disconnect_peer(id)
 
 
 func _reconnect_clients(old_id: int, new_id: int, info: Dictionary)->void:

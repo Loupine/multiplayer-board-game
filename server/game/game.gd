@@ -71,19 +71,10 @@ func _send_reconnect_data(_player_data: Dictionary, _player_turn_id)->void:
 
 # The server starts the next player's turn and notifies all clients whose turn it is
 @rpc("authority", "call_local", "reliable")
-func _start_player_turn(player_id: int, _actions_taken: Array)->void:
-	# Set player camera on the server. Useful for developmental debugging.
-	# Should be removed for production ready builds.
-	_set_player_camera(player_id)
-
-
-func _set_player_camera(player_id: int)->void:
-	# Doing %Players.find_child(str(player_id)) erroneously returns null so we 
-	# unfortunately have to loop through all the players
-	for child in %Players.get_children():
-		if child.name == str(player_id):
-			child.call("set_player_camera")
-			break
+func _start_player_turn(_player_id: int, _actions_taken: Array)->void:
+	# If custom server logic is required when starting a player's turn, put it here
+	# in place of 'pass'
+	pass
 
 
 # This notifies the server to start the next player's turn when the current one finishes. 

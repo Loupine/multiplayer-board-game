@@ -23,7 +23,3 @@ shape = SubResource("CircleShape2D_yyrtc")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
 texture = SubResource("GradientTexture2D_qpln0")
-
-[node name="Camera2D" type="Camera2D" parent="."]
-unique_name_in_owner = true
-zoom = Vector2(2, 2)

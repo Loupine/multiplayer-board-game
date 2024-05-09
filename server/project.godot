@@ -18,3 +18,4 @@ config/icon="res://icon.svg"
 [autoload]
 
 Lobby="*res://lobby.gd"
+PlayerReconnector="*res://player_reconnector.gd"

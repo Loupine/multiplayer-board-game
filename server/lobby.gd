@@ -77,7 +77,7 @@ func _server_receive_player_info(new_player_info: Dictionary)->void:
 		if game_started:
 			if disconnected_players.size() > 0:
 				# Try reconnection if game is started and there are disconnected players
-				_try_player_reconnect(sender_id, new_player_info)
+				PlayerReconnector.try_player_reconnect(sender_id, new_player_info)
 			else:
 				# Disconnect new peer if game started and all players are present
 				multiplayer.multiplayer_peer.disconnect_peer(sender_id)
@@ -96,72 +96,16 @@ func _server_receive_player_info(new_player_info: Dictionary)->void:
 func _send_new_player_info_to_players(new_player_id: int, info: Dictionary)->void:
 	for player in players:
 		# Sends new player info to existing players
-		_register_player.rpc_id(player, new_player_id, info)
+		register_player.rpc_id(player, new_player_id, info)
 
 		# Send existing player info to new players
 		var existing_player_info :Dictionary= players.get(player)
-		_register_player.rpc_id(new_player_id, player, existing_player_info)
-
-
-func _try_player_reconnect(id: int, info: Dictionary)->void:
-	var player_reconnected := false
-	# Make sure the player isn't already connected!
-	for player in players:
-		var connected_player_info :Dictionary= players.get(player)
-		if connected_player_info["name"] == info["name"]:
-			# Disconnect peer if a player with the same name already exists.
-			# Could potentially cause issues if two players joined a lobby with
-			# the same name and one has to reconnect during the game.
-			multiplayer.multiplayer_peer.disconnect_peer(id, true)
-			return
-
-	# Validate the player was disconnected and try reconnecting them
-	for player in disconnected_players:
-		var disconnected_player_info :Dictionary= disconnected_players.get(player)
-		if disconnected_player_info["name"] == info["name"]:
-			info["board_position"] = disconnected_player_info["board_position"]
-			_reconnect_clients(player, id, info)
-			players[id] = info
-			$/root/Game.update_turn_order_ids(player, id)
-			disconnected_players.erase(player)
-			player_reconnected = true
-			print("%s successfully reconnected" % info["name"])
-			break
-
-	# If reconnect attempt fails, disconnect the peer
-	if !player_reconnected:
-		multiplayer.multiplayer_peer.disconnect_peer(id, true)
-
-
-func _reconnect_clients(old_id: int, new_id: int, info: Dictionary)->void:
-	for player in players:
-		# Notify existing players that the player has reconnected
-		_reconnect_player.rpc_id(player, old_id, new_id, info)
-
-		# Re-register existing players with the reconnected one.
-		var existing_player_info = players.get(player)
-		_register_player.rpc_id(new_id, player, existing_player_info)
-	_reconnect_player(old_id, new_id, info)
-
-
-# Method that handles player reconnection, also called from the server on clients
-@rpc("authority", "call_remote", "reliable")
-func _reconnect_player(old_id: int, new_id: int, _info: Dictionary)->void:
-	# We have to loop through all players because 
-	# $/root/Game.find_child("Players").find_child(str(old_id))
-	# returns null
-	for child in $/root/Game.find_child("Players").get_children():
-		print(child.name)
-		if child.name == str(old_id):
-			child.name = str(new_id) # Update the old name with the new id
-			print(child.name)
-			load_game.rpc_id(new_id, "res://game/game.tscn")
-			break
+		register_player.rpc_id(new_player_id, player, existing_player_info)
 
 
 # Client method that adds new players with info sent from server
 @rpc("authority", "call_remote", "reliable")
-func _register_player(_new_player_id: int, _new_player_info: Dictionary)->void:
+func register_player(_new_player_id: int, _new_player_info: Dictionary)->void:
 	pass
 
 

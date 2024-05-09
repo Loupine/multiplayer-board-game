@@ -84,16 +84,9 @@ func _server_receive_player_info(_new_player_info: Dictionary)->void:
 
 # Client method that adds new players with info sent from server
 @rpc("authority", "call_remote", "reliable")
-func _register_player(new_player_id: int, new_player_info: Dictionary)->void:
+func register_player(new_player_id: int, new_player_info: Dictionary)->void:
 	players[new_player_id] = new_player_info
 	player_connected.emit(new_player_id, new_player_info)
-
-
-@rpc("authority", "call_remote", "reliable")
-func _reconnect_player(old_id: int, new_id: int, info: Dictionary)->void:
-	$/root/Game.restore_player_functionality(old_id, new_id)
-	players.erase(old_id)
-	players[new_id] = info
 
 
 # Server notifies clients when the lobby is full.

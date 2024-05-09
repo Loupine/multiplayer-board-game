@@ -5,14 +5,16 @@ var _scene_tree: SceneTree
 var _multiplayer_id: int
 var _total_board_positions: int
 var _board_positions_node: Node
+var _player_controls_node: Node
 var _current_player_node: Node
 
 
-func _init(scene_tree: SceneTree, multiplayer_id: int, total_board_positions: int, board_positions_node: Node)->void:
+func _init(scene_tree: SceneTree, multiplayer_id: int, total_board_positions: int, board_positions_node: Node, player_controls_node: Node)->void:
 	_scene_tree = scene_tree
 	_multiplayer_id = multiplayer_id
 	_total_board_positions = total_board_positions
 	_board_positions_node = board_positions_node
+	_player_controls_node = player_controls_node
 
 
 func update_current_player_node(current_player_node: Node)->void:
@@ -23,7 +25,7 @@ func move_player(action_result: int, player_id: int)->void:
 	var roll :int= action_result
 	if _multiplayer_id == player_id: # If this client is the player, do the action
 		await _move_player_to_next_board_position(player_id, roll)
-		_current_player_node.call("on_finished_moving")
+		_player_controls_node.call("on_finished_moving")
 	else:
 		await _move_player_to_next_board_position(player_id, roll)
 

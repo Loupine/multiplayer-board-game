@@ -1,6 +1,7 @@
-[gd_scene load_steps=22 format=3 uid="uid://uh2ili1wypwd"]
+[gd_scene load_steps=23 format=3 uid="uid://uh2ili1wypwd"]
 
 [ext_resource type="Script" path="res://game/game.gd" id="1_lpfj5"]
+[ext_resource type="Script" path="res://game/player_controls.gd" id="2_kke6m"]
 
 [sub_resource type="Gradient" id="Gradient_72nex"]
 offsets = PackedFloat32Array(0.990991, 1)
@@ -232,3 +233,45 @@ layout_mode = 2
 unique_name_in_owner = true
 layout_mode = 2
 text = "Round: 1"
+
+[node name="PlayerControls" type="Control" parent="CanvasLayer"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 3
+anchors_preset = 0
+offset_right = 1280.0
+offset_bottom = 720.0
+script = ExtResource("2_kke6m")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="CanvasLayer/PlayerControls"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+alignment = 2
+
+[node name="HBoxContainer" type="HBoxContainer" parent="CanvasLayer/PlayerControls/VBoxContainer"]
+custom_minimum_size = Vector2(0, 95.655)
+layout_mode = 2
+alignment = 1
+
+[node name="RollForMovementButton" type="Button" parent="CanvasLayer/PlayerControls/VBoxContainer/HBoxContainer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(163.77, 43.69)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+text = "Roll for Movement"
+
+[node name="EndTurnButton" type="Button" parent="CanvasLayer/PlayerControls/VBoxContainer/HBoxContainer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(163.77, 43.69)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+text = "End Turn"
+
+[connection signal="pressed" from="CanvasLayer/PlayerControls/VBoxContainer/HBoxContainer/RollForMovementButton" to="CanvasLayer/PlayerControls" method="_on_roll_for_movement_button_pressed"]
+[connection signal="pressed" from="CanvasLayer/PlayerControls/VBoxContainer/HBoxContainer/EndTurnButton" to="CanvasLayer/PlayerControls" method="_on_end_turn_button_pressed"]

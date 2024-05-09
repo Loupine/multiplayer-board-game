@@ -10,7 +10,7 @@ var actions: Node
 
 func _ready():
 	Lobby.player_loaded.rpc_id(1)
-	actions = Actions.new(get_tree(), multiplayer.get_unique_id(), TOTAL_BOARD_POSITIONS, $BoardPositions)
+	actions = Actions.new(get_tree(), multiplayer.get_unique_id(), TOTAL_BOARD_POSITIONS, %BoardPositions, %PlayerControls)
 	%LocalPlayerName.text = Lobby.player_info["name"]
 
 
@@ -67,7 +67,7 @@ func _start_player_turn(player_id: int, actions_taken: Array)->void:
 		turn_number += 1
 		%CurrentPlayerName.text = "%s's turn" % %LocalPlayerName.text
 		%TurnNumber.text = "Turn: " + str(turn_number)
-		current_player_node.call("show_controls", actions_taken)
+		%PlayerControls.show_controls(actions_taken)
 	else:
 		var player_name :String= Lobby.players.get(player_id)["name"]
 		%CurrentPlayerName.text = "%s's turn" % player_name

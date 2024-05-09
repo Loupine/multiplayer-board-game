@@ -43,38 +43,39 @@ func _create_player(player_id: int)->CharacterBody2D:
 	return player_body
 
 
-# Reconnecting client receives positional data from the server and reconstructs
-# the other players' nodes and updates the active player body if it's their turn.
+# Reconnecting client receives positional data from the server, reconstructs
+# the other players' nodes, and updates the active player body.
 @rpc("authority", "call_remote", "reliable")
 func _send_reconnect_data(player_data: Dictionary, player_turn_id: int)->void:
 	for id in player_data:
+		# Spawn the player body
 		var player_body = _create_player(id)
 		%Players.add_child(player_body)
+		# Update the player body's position based on the player data
 		var board_position_index = player_data.get(id)["board_position"]
 		player_body.position = %BoardPositions.get_child(board_position_index).position
 
 		if id == multiplayer.get_unique_id():
+			# Update client's player data
 			Lobby.player_info["board_position"] = board_position_index
 		if id == player_turn_id:
+			# Update the active player node 
 			current_player_node = player_body
 
 
 # The server starts the next player's turn and notifies all clients whose turn it is
 @rpc("authority", "call_remote", "reliable")
 func _start_player_turn(player_id: int, actions_taken: Array)->void:
-	_find_player_node(player_id)
+	_update_current_player_node(player_id)
 	if multiplayer.get_unique_id() == player_id:
 		turn_number += 1
-		%CurrentPlayerName.text = "%s's turn" % %LocalPlayerName.text
-		%TurnNumber.text = "Turn: " + str(turn_number)
+		_update_gameui_turn_text(player_id, turn_number)
 		%ControlsUI.show_controls(actions_taken)
 	else:
-		var player_name :String= Lobby.players.get(player_id)["name"]
-		%CurrentPlayerName.text = "%s's turn" % player_name
-		print("%s's turn started." % player_name)
+		_update_gameui_turn_text(player_id, -1)
 
 
-func _find_player_node(player_id: int)->void:
+func _update_current_player_node(player_id: int)->void:
 	# Doing %Players.find_child(str(player_id)) returns null so we loop through 
 	# all the players until we find one with a matching name
 	for child in %Players.get_children():
@@ -82,6 +83,16 @@ func _find_player_node(player_id: int)->void:
 			current_player_node = child # Set the current player node for future reference
 			actions.update_current_player_node(current_player_node)
 			break
+
+
+# Updates GameUI to reflect the current turn's information. When called with
+# number < 0, it is not the local player's turn and the turn text will not be updated
+func _update_gameui_turn_text(player_id: int, number: int)->void:
+	if number >= 0: 
+		%TurnNumber.text = "Turn: " + str(number)
+		%CurrentPlayerName.text = "Your turn"
+	else:
+		%CurrentPlayerName.text = "%s's turn" % Lobby.players.get(player_id)["name"]
 
 
 # This notifies the server to start the next player's turn when the current turn finishes. 

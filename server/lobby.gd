@@ -200,7 +200,6 @@ func _on_player_disconnected(id: int)->void:
 	print("Player %d, disconnected!" % id)
 	if game_started:
 		disconnected_players[id] = players.get(id)
-		disconnected_players.get(id)["connection_status"] = "Disconnected"
 
 	players_ready.clear()
 	players.erase(id)

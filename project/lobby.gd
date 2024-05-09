@@ -22,7 +22,6 @@ var players :Dictionary= {}
 var player_info :Dictionary= {
 	"name": "Name",
 	"board_position": 0,
-	"connection_status": "Status"
 }
 var game_started := false
 
@@ -74,7 +73,6 @@ func player_loaded()->void:
 
 # When a client connects to a server, send player info to the server
 func _on_connected_to_server()->void:
-	player_info["connection_status"] = "Connected"
 	_server_receive_player_info.rpc_id(1, player_info)
 
 
@@ -137,6 +135,5 @@ func _on_server_disconnected()->void:
 	player_info = {
 		"name": "Name",
 		"board_position": 0,
-		"connection_status": "Status"
 	}
 	load_lobby("res://main_menu.tscn")

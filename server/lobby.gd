@@ -118,9 +118,9 @@ func _notify_full_lobby()->void:
 # Clients notify the server when they toggle the ready box. When all players are
 # ready the game will start.
 @rpc("any_peer", "call_remote", "reliable")
-func notify_player_ready_status()->void:
+func notify_player_ready_status(value: bool)->void:
 	var sender_id := multiplayer.get_remote_sender_id()
-	if not players_ready.has(sender_id):
+	if value and not players_ready.has(sender_id):
 		players_ready.append(sender_id)
 		if players_ready.size() == MAX_CONNECTIONS:
 			load_game.rpc("res://game/game.tscn")

@@ -100,7 +100,7 @@ func _notify_full_lobby()->void:
 # Clients notify the server when they toggle the ready box. When all players are
 # ready the game will start.
 @rpc("any_peer", "call_remote", "reliable")
-func notify_player_ready_status()->void:
+func notify_player_ready_status(_value: bool)->void:
 	pass
 
 

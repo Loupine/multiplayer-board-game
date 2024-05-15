@@ -1,29 +1,30 @@
 extends Node2D
 
-const TOTAL_BOARD_POSITIONS := 10
+const _TOTAL_BOARD_POSITIONS := 10
 
-var unique_id: int
-var current_player_node: Node
-var round_number := 1
-var turn_number := 0
-var actions: Node
+var _unique_id: int
+var _current_player_node: Node
+var _round_number := 1
+var _turn_number := 0
+var _actions: Node
 
 
 func _ready():
-	unique_id = multiplayer.get_unique_id()
+	_unique_id = multiplayer.get_unique_id()
 	Lobby.player_loaded.rpc_id(1)
-	actions = Actions.new(get_tree(), unique_id, TOTAL_BOARD_POSITIONS, %BoardPositions, %ControlsUI)
+	_actions = Actions.new(get_tree(), _unique_id, _TOTAL_BOARD_POSITIONS, %BoardPositions, %ControlsUI)
 	%LocalPlayerName.text = Lobby.player_info["name"]
 
 
 func _physics_process(_delta: float):
-	if current_player_node != null:
-		%Camera2D.position = current_player_node.position
+	if _current_player_node != null:
+		%Camera2D.position = _current_player_node.position
 
 
 # Called on clients when a player is reconnecting. Ensures the old player id is
-# replaced with the new and that the player can control their body again.
-func restore_player_functionality(old_id: int, new_id: int)->void:
+# replaced with the new one and the player's body is named properly.
+# Is required for player bodies to update correctly
+func replace_old_player_id(old_id: int, new_id: int)->void:
 	for child in %Players.get_children():
 		if child.name == str(old_id):
 			child.set_name(str(new_id))
@@ -58,23 +59,22 @@ func _send_reconnect_data(player_data: Dictionary, player_turn_id: int, round_nu
 		var board_position_index = player_data.get(id)["board_position"]
 		player_body.position = %BoardPositions.get_child(board_position_index).position
 
-		if id == unique_id:
-			# Update client's player data
-			Lobby.player_info["board_position"] = board_position_index
+		if id == _unique_id:
+			Lobby.player_info["board_position"] = board_position_index # Update client's player data
 		if id == player_turn_id:
 			# Update the active player node
-			current_player_node = player_body
-			actions.update_current_player_node(current_player_node)
-			_update_turn_text(id, turn_number)
+			_current_player_node = player_body
+			_actions.update_current_player_node(_current_player_node)
+			_update_turn_text(id, _turn_number)
 
 
 # The server starts the next player's turn and notifies all clients whose turn it is
 @rpc("authority", "call_remote", "reliable")
 func _start_player_turn(player_id: int, actions_taken: Array)->void:
 	_update_current_player_node(player_id)
-	if unique_id == player_id:
-		turn_number += 1
-		_update_turn_text(player_id, turn_number)
+	if _unique_id == player_id:
+		_turn_number += 1
+		_update_turn_text(player_id, _turn_number)
 		%ControlsUI.show_controls(actions_taken)
 	else:
 		_update_turn_text(player_id, -1)
@@ -85,14 +85,14 @@ func _update_current_player_node(player_id: int)->void:
 	# all the players until we find one with a matching name
 	for child in %Players.get_children():
 		if child.name == str(player_id):
-			current_player_node = child # Set the current player node for future reference
-			actions.update_current_player_node(current_player_node)
+			_current_player_node = child # Set the current player node for future reference
+			_actions.update_current_player_node(_current_player_node)
 			break
 
 
 # Updates GameUI to reflect the current turn's information.
 func _update_turn_text(player_id: int, number: int)->void:
-	if unique_id == player_id: 
+	if _unique_id == player_id: 
 		%TurnNumber.text = "Turn: " + str(number)
 		%CurrentPlayerName.text = "Your turn"
 	else:
@@ -100,8 +100,8 @@ func _update_turn_text(player_id: int, number: int)->void:
 
 
 func _update_round_text(round_num: int)->void:
-	round_number = round_num
-	%RoundNumber.text = "Round: " + str(round_number)
+	_round_number = round_num
+	%RoundNumber.text = "Round: " + str(_round_number)
 
 
 # This notifies the server to start the next player's turn when the current turn finishes. 
@@ -119,25 +119,25 @@ func action_started(_action_name: String)->void:
 	pass
 
 
-# Server processes actions requested by players and tells all clients what action
+# Server processes _actions requested by players and tells all clients what action
 # was requested, which player requested it, and any data necessary to complete the
 # action.
 @rpc("authority", "call_remote", "reliable")
 func _action_processed(action_name: String, action_result: Variant, player_id: int)->void:
 	match action_name:
 		"ROLL":
-			actions.move_player(action_result, player_id)
+			_actions.move_player(action_result, player_id)
 
 
 # The server determines when the round finishes and rpc's the clients
 @rpc("authority", "call_local", "reliable")
 func _round_finished()->void:
-	_update_round_text(round_number + 1)
+	_update_round_text(_round_number + 1)
 	# Sync turn number with round number if offset at the end of the round
-	# turn_number should always be 1 less than round_number when a round starts
-	if round_number > turn_number + 1:
-		turn_number = round_number - 1
-		_update_turn_text(unique_id, turn_number)
+	# _turn_number should always be 1 less than _round_number when a round starts
+	if _round_number > _turn_number + 1:
+		_turn_number = _round_number - 1
+		_update_turn_text(_unique_id, _turn_number)
 
 
 # The server determines when the game finishes and rpc's the clients. Currently

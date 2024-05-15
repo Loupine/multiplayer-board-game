@@ -84,7 +84,7 @@ func _server_receive_player_info(_new_player_info: Dictionary)->void:
 
 # Client method that adds new players with info sent from server
 @rpc("authority", "call_remote", "reliable")
-func register_player(new_player_id: int, new_player_info: Dictionary)->void:
+func _register_player(new_player_id: int, new_player_info: Dictionary)->void:
 	players[new_player_id] = new_player_info
 	player_connected.emit(new_player_id, new_player_info)
 

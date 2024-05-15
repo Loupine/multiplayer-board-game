@@ -13,38 +13,10 @@ var current_turn_index := 0
 var round_number := 1
 
 
-func _ready():
+func _ready()->void:
 	connect("round_finished", _on_round_finished)
 	connect("game_finished", _on_game_finished)
 	randomize()
-
-
-# Called exclusively on the server to determine player order and start the game
-func start_game()->void:
-	Lobby.game_started = true
-	_spawn_players.rpc(Lobby.players)
-	_determine_player_turn_order()
-	_start_player_turn.rpc(turn_order[current_turn_index], turn_actions_taken)
-
-
-# Called by the server to signal clients to spawn player bodies.
-@rpc("authority", "call_local", "reliable")
-func _spawn_players(players_dictionary: Dictionary)->void:
-	for id in players_dictionary:
-		var player_body := _create_player(id)
-		%Players.add_child(player_body)
-
-
-func _create_player(player_id: int)->CharacterBody2D:
-	var player_body := preload("res://player/player.tscn").instantiate()
-	player_body.name = str(player_id)
-	return player_body
-
-
-func _determine_player_turn_order():
-	for player in Lobby.players:
-		turn_order.append(player)
-	turn_order.shuffle()
 
 
 # Used if a player is reconnecting to the server and their old id needs to be updated
@@ -63,25 +35,12 @@ func handle_reconnection(id: int)->void:
 		_start_player_turn.rpc(id, turn_actions_taken)
 
 
-# The server starts the next player's turn and notifies all clients whose turn it is
-@rpc("authority", "call_local", "reliable")
-func _start_player_turn(_player_id: int, _actions_taken: Array)->void:
-	# If custom server logic is required when starting a player's turn, put it here
-	# in place of 'pass'
-	pass
-
-
-# This notifies the server to start the next player's turn when the current one finishes. 
-@rpc("any_peer", "call_remote", "reliable")
-func turn_finished()->void:
-	# Continue only if it is the sender's turn
-	if multiplayer.get_remote_sender_id() == turn_order[current_turn_index]:
-		current_turn_index = (current_turn_index + 1) % turn_order.size()
-		turn_finsihed.emit()
-		if current_turn_index == 0:
-			round_finished.emit()
-		turn_actions_taken.clear()
-		_start_player_turn.rpc(turn_order[current_turn_index], turn_actions_taken) # Start the next player's turn
+# Called exclusively on the server to determine player order and start the game
+func start_game()->void:
+	Lobby.game_started = true
+	_spawn_players.rpc(Lobby.players)
+	_determine_player_turn_order()
+	_start_player_turn.rpc(turn_order[current_turn_index], turn_actions_taken)
 
 
 # Client should call this when they want to start an action. This tells the server
@@ -96,25 +55,59 @@ func action_started(action_name: String)->void:
 				if not turn_actions_taken.has(action_name):
 					# Determine a number of spaces for the player to move
 					var random_roll := randi_range(1, 6)
-					_action_processed.rpc(action_name, random_roll, player_id)
+					_action_granted.rpc(action_name, random_roll, player_id)
 					_update_player_board_position(player_id, random_roll)
 					turn_actions_taken.append(action_name)
 	else:
 		print("It is not this player's turn.")
 
 
+# Called by the server to signal clients to spawn player bodies.
+@rpc("authority", "call_local", "reliable")
+func _spawn_players(players_dictionary: Dictionary)->void:
+	for id in players_dictionary:
+		var player_body := _create_player(id)
+		%Players.add_child(player_body)
+
+
+func _create_player(player_id: int)->CharacterBody2D:
+	var player_body := preload("res://player/player.tscn").instantiate()
+	player_body.name = str(player_id)
+	return player_body
+
+
+func _determine_player_turn_order()->void:
+	for player in Lobby.players:
+		turn_order.append(player)
+	turn_order.shuffle()
+
+
+# The server starts the next player's turn and notifies all clients whose turn it is
+@rpc("authority", "call_local", "reliable")
+func _start_player_turn(_player_id: int, _actions_taken: Array)->void:
+	# If custom server logic is required when starting a player's turn, put it here
+	# in place of 'pass'
+	pass
+
+
+# This notifies the server to start the next player's turn when the current one finishes. 
+@rpc("any_peer", "call_local", "reliable")
+func _turn_finished()->void:
+	# Continue only if it is the sender's turn
+	if multiplayer.get_remote_sender_id() == turn_order[current_turn_index]:
+		current_turn_index = (current_turn_index + 1) % turn_order.size()
+		turn_finsihed.emit()
+		if current_turn_index == 0:
+			round_finished.emit()
+		turn_actions_taken.clear()
+		# Start the next player's turn
+		_start_player_turn.rpc(turn_order[current_turn_index], turn_actions_taken)
+
+
 func _update_player_board_position(player_id: int, roll: int)->void:
 	var board_position_index = Lobby.players.get(player_id)["board_position"]
 	var next_position_index = (board_position_index + roll) % %BoardPositions.get_children().size()
 	Lobby.players.get(player_id)["board_position"] = next_position_index
-
-
-# Server processes player actions and tells all clients what action was requested, 
-# which player requested it, and any data necessary to complete the action. Called 
-# in the above action_started method
-@rpc("authority", "call_remote", "reliable")
-func _action_processed(_action_name: String, _action_result: Variant, _player_id: int)->void:
-	pass
 
 
 # The server determines when the round finishes and rpc's the clients
@@ -133,6 +126,14 @@ func _game_finished()->void:
 	# on the clients when a game ends. This custom logic should replace the pass
 	# line on clients and the below rpc call should be moved elsewhere
 	Lobby.load_lobby.rpc("res://main_menu.tscn")
+
+
+# Server processes player actions and tells all clients what action was requested, 
+# which player requested it, and any data necessary to complete the action. Called 
+# in the action_started method
+@rpc("authority", "call_remote", "reliable")
+func _action_granted(_action_name: String, _action_result: Variant, _player_id: int)->void:
+	pass
 
 
 func _on_round_finished()->void:

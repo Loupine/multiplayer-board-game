@@ -1,5 +1,7 @@
 extends Control
 
+signal turn_finished
+
 
 func show_controls(actions_taken: Array)->void:
 	show()
@@ -23,5 +25,4 @@ func _on_roll_for_movement_button_pressed():
 
 func _on_end_turn_button_pressed():
 	hide()
-	# Notify server turn is finished
-	$/root/Game.turn_finished.rpc_id(1)
+	turn_finished.emit()

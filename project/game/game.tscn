@@ -273,5 +273,6 @@ size_flags_horizontal = 4
 size_flags_vertical = 4
 text = "End Turn"
 
+[connection signal="turn_finished" from="CanvasLayer/ControlsUI" to="." method="_turn_finished"]
 [connection signal="pressed" from="CanvasLayer/ControlsUI/VBoxContainer/HBoxContainer/RollForMovementButton" to="CanvasLayer/ControlsUI" method="_on_roll_for_movement_button_pressed"]
 [connection signal="pressed" from="CanvasLayer/ControlsUI/VBoxContainer/HBoxContainer/EndTurnButton" to="CanvasLayer/ControlsUI" method="_on_end_turn_button_pressed"]

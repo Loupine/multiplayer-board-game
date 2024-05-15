@@ -96,16 +96,16 @@ func _server_receive_player_info(new_player_info: Dictionary)->void:
 func _send_new_player_info_to_players(new_player_id: int, info: Dictionary)->void:
 	for player in players:
 		# Sends new player info to existing players
-		register_player.rpc_id(player, new_player_id, info)
+		_register_player.rpc_id(player, new_player_id, info)
 
 		# Send existing player info to new players
 		var existing_player_info :Dictionary= players.get(player)
-		register_player.rpc_id(new_player_id, player, existing_player_info)
+		_register_player.rpc_id(new_player_id, player, existing_player_info)
 
 
 # Client method that adds new players with info sent from server
 @rpc("authority", "call_remote", "reliable")
-func register_player(_new_player_id: int, _new_player_info: Dictionary)->void:
+func _register_player(_new_player_id: int, _new_player_info: Dictionary)->void:
 	pass
 
 

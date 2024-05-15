@@ -48,7 +48,7 @@ func _reconnect_clients(old_id: int, new_id: int, info: Dictionary)->void:
 
 		# Re-register existing players with the reconnected one.
 		var existing_player_info = Lobby.players.get(player)
-		Lobby.register_player.rpc_id(new_id, player, existing_player_info)
+		Lobby._register_player.rpc_id(new_id, player, existing_player_info)
 	_reconnect_player(old_id, new_id, info)
 
 

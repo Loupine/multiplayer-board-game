@@ -34,6 +34,13 @@ func try_player_reconnect(id: int, info: Dictionary)->void:
 		multiplayer.multiplayer_peer.disconnect_peer(id)
 
 
+# Server sends data to reconnecting clients with necessary data to correct their
+# game board
+@rpc("authority", "call_remote", "reliable")
+func process_player_reconnection(_player_data: Dictionary, _player_turn_id: int, _round_num: int)->void:
+	pass
+
+
 func _reconnect_clients(old_id: int, new_id: int, info: Dictionary)->void:
 	for player in Lobby.players:
 		# Notify existing players that the player has reconnected

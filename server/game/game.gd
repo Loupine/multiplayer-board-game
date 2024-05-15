@@ -58,7 +58,7 @@ func update_turn_order_ids(old_id: int, new_id: int)->void:
 func handle_reconnection(id: int)->void:
 	var player_data :Dictionary= Lobby.players
 	# Sends all other client data and the round number to the reconnecting player
-	PlayerReconnector.process_player_reconnection.rpc_id(id, player_data, turn_order[current_turn_index], round_number)
+	PlayerReconnector.process_reconnection.rpc_id(id, player_data, turn_order[current_turn_index], round_number)
 	if turn_order[current_turn_index] == id: # If it's the reconnecting player's turn, start their turn again
 		_start_player_turn.rpc(id, turn_actions_taken)
 

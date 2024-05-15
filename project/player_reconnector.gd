@@ -12,7 +12,7 @@ func _reconnect_player(old_id: int, new_id: int, info: Dictionary)->void:
 # Reconnecting client receives positional data from the server, reconstructs
 # the other players' nodes, and updates the active player body.
 @rpc("authority", "call_remote", "reliable")
-func process_player_reconnection(player_data: Dictionary, player_turn_id: int, round_num: int)->void:
+func process_reconnection(player_data: Dictionary, player_turn_id: int, round_num: int)->void:
 	$/root/Game.update_round_text(round_num)
 	for id in player_data:
 		# Spawn the player body

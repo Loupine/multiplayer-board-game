@@ -37,7 +37,7 @@ func try_player_reconnect(id: int, info: Dictionary)->void:
 # Server sends data to reconnecting clients with necessary data to correct their
 # game board
 @rpc("authority", "call_remote", "reliable")
-func process_player_reconnection(_player_data: Dictionary, _player_turn_id: int, _round_num: int)->void:
+func process_reconnection(_player_data: Dictionary, _player_turn_id: int, _round_num: int)->void:
 	pass
 
 

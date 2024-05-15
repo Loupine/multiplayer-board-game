@@ -2,15 +2,17 @@ extends Node2D
 
 const TOTAL_BOARD_POSITIONS := 10
 
-var current_player_node
+var unique_id: int
+var current_player_node: Node
 var round_number := 1
 var turn_number := 0
 var actions: Node
 
 
 func _ready():
+	unique_id = multiplayer.get_unique_id()
 	Lobby.player_loaded.rpc_id(1)
-	actions = Actions.new(get_tree(), multiplayer.get_unique_id(), TOTAL_BOARD_POSITIONS, %BoardPositions, %ControlsUI)
+	actions = Actions.new(get_tree(), unique_id, TOTAL_BOARD_POSITIONS, %BoardPositions, %ControlsUI)
 	%LocalPlayerName.text = Lobby.player_info["name"]
 
 
@@ -46,7 +48,8 @@ func _create_player(player_id: int)->CharacterBody2D:
 # Reconnecting client receives positional data from the server, reconstructs
 # the other players' nodes, and updates the active player body.
 @rpc("authority", "call_remote", "reliable")
-func _send_reconnect_data(player_data: Dictionary, player_turn_id: int)->void:
+func _send_reconnect_data(player_data: Dictionary, player_turn_id: int, round_num: int)->void:
+	_update_round_text(round_num)
 	for id in player_data:
 		# Spawn the player body
 		var player_body = _create_player(id)
@@ -55,26 +58,26 @@ func _send_reconnect_data(player_data: Dictionary, player_turn_id: int)->void:
 		var board_position_index = player_data.get(id)["board_position"]
 		player_body.position = %BoardPositions.get_child(board_position_index).position
 
-		if id == multiplayer.get_unique_id():
+		if id == unique_id:
 			# Update client's player data
 			Lobby.player_info["board_position"] = board_position_index
 		if id == player_turn_id:
-			# Update the active player node 
+			# Update the active player node
 			current_player_node = player_body
 			actions.update_current_player_node(current_player_node)
-			_update_gameui_turn_text(id, turn_number)
+			_update_turn_text(id, turn_number)
 
 
 # The server starts the next player's turn and notifies all clients whose turn it is
 @rpc("authority", "call_remote", "reliable")
 func _start_player_turn(player_id: int, actions_taken: Array)->void:
 	_update_current_player_node(player_id)
-	if multiplayer.get_unique_id() == player_id:
+	if unique_id == player_id:
 		turn_number += 1
-		_update_gameui_turn_text(player_id, turn_number)
+		_update_turn_text(player_id, turn_number)
 		%ControlsUI.show_controls(actions_taken)
 	else:
-		_update_gameui_turn_text(player_id, -1)
+		_update_turn_text(player_id, -1)
 
 
 func _update_current_player_node(player_id: int)->void:
@@ -88,12 +91,17 @@ func _update_current_player_node(player_id: int)->void:
 
 
 # Updates GameUI to reflect the current turn's information.
-func _update_gameui_turn_text(player_id: int, number: int)->void:
-	if multiplayer.get_unique_id() == player_id: 
+func _update_turn_text(player_id: int, number: int)->void:
+	if unique_id == player_id: 
 		%TurnNumber.text = "Turn: " + str(number)
 		%CurrentPlayerName.text = "Your turn"
 	else:
 		%CurrentPlayerName.text = "%s's turn" % Lobby.players.get(player_id)["name"]
+
+
+func _update_round_text(round_num: int)->void:
+	round_number = round_num
+	%RoundNumber.text = "Round: " + str(round_number)
 
 
 # This notifies the server to start the next player's turn when the current turn finishes. 
@@ -124,8 +132,12 @@ func _action_processed(action_name: String, action_result: Variant, player_id: i
 # The server determines when the round finishes and rpc's the clients
 @rpc("authority", "call_local", "reliable")
 func _round_finished()->void:
-	round_number += 1
-	%RoundNumber.text = "Round: " + str(round_number)
+	_update_round_text(round_number + 1)
+	# Sync turn number with round number if offset at the end of the round
+	# turn_number should always be 1 less than round_number when a round starts
+	if round_number > turn_number + 1:
+		turn_number = round_number - 1
+		_update_turn_text(unique_id, turn_number)
 
 
 # The server determines when the game finishes and rpc's the clients. Currently
